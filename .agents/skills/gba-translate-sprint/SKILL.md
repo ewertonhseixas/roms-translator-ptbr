@@ -2,44 +2,46 @@
 name: gba-translate-sprint
 description: >-
   Orquestra uma Sprint de Tradução e Localização PT-BR de alta performance (em série ou
-  em enxame multi-agente / Swarm) aplicando Contexto Cirúrgico (Token Economy), Voz de
-  Personagem, Neutralidade de Gênero Sistêmica e validação imediata via Quality Gate.
-  Use sempre que o usuário pedir para traduzir lotes, capítulos, itens ou menus de um jogo GBA.
+  em enxame multi-agente / Swarm) aplicando as regras específicas da ROM (project_profile.json),
+  o Glossário Soberano do Jogo, Contexto Cirúrgico (Token Economy), Voz de Personagem,
+  Neutralidade de Gênero e validação imediata via Quality Gate e App Validador.
 ---
 
 # ⚡ Skill: Sprint de Tradução Multi-Agente (`gba-translate-sprint`)
 
-Este playbook aplica o fluxo de estúdio do *Claude-Code-Game-Studios* combinado com o [Protocolo Mestre de Tradução](../../02_TRADUCAO_ROMS_GBA/protocolo_traducao/PROTOCOLO_MESTRE_TRADUCAO.md) para traduzir lotes de ROMs com máxima qualidade literária e zero estouro de memória/tela.
+Este playbook aplica o fluxo de estúdio do *Claude-Code-Game-Studios* combinado com o [Protocolo Mestre de Tradução](../../02_TRADUCAO_ROMS_GBA/protocolo_traducao/PROTOCOLO_MESTRE_TRADUCAO.md) para traduzir lotes de qualquer ROM com máxima qualidade literária, zero estouro de memória/tela e compatibilidade total com o App Validador.
 
 ## 🔄 Fluxo Operacional da Sprint
 
 ```mermaid
 flowchart LR
-    PREP["1. Pré-Check<br>(Glossário + Catálogo)"] --> BATCH["2. Contexto Cirúrgico<br>(token_optimizer_batcher)"]
+    PREP["1. Pré-Check da ROM<br>(Perfil + Glossário + Catálogo)"] --> BATCH["2. Contexto Cirúrgico<br>(token_optimizer_batcher)"]
     BATCH --> EXEC["3. Execução Tier 3<br>(Tradutores Paralelos)"]
-    EXEC --> GATE["4. Quality Gate<br>(qa_gate_hook.py)"]
+    EXEC --> GATE["4. Quality Gate & Validador<br>(qa_gate_hook + md_compat)"]
     GATE --> DONE["5. Aprovação & Merge<br>(Status: ✅ Validado)"]
 ```
 
-### Passo 1: Pré-Check de Contexto (Tier 1 & Tier 2)
+### Passo 1: Pré-Check de Engenharia e Contexto do Jogo (Tier 1 & Tier 2)
 Antes de traduzir o arquivo `.md` alvo:
-1. Leia os termos relevantes em `02-glossario-e-terminologias.md` (e `GLOSSARIO_GLOBAL_SUMMON_NIGHT.md` se for da série *Summon Night*).
-2. Consulte as vozes dos falantes presentes no arquivo em `catalogo-de-personagens.md`.
-3. Se o arquivo tiver mais de 60 linhas pendentes, você pode usar `token_optimizer_batcher.py` para gerar blocos enxutos de 35-50 falas ou dividir por faixas de linhas entre subagentes (`gba-dialogue-translator`).
+1. Leia `project_profile.json` e `docs/REGRAS_ESPECIFICAS_DO_JOGO.md` do jogo ativo para carregar o `hard_limit`, `soft_limit`, `gender_mode` e particularidades daquela ROM.
+2. Leia os termos relevantes no **Glossário Global Soberano do Jogo** (`ARQUIVOS md/02-glossario-*.md`) e no Glossário da Franquia/Série (se vinculado no `project_profile.json`).
+3. Consulte as vozes dos falantes presentes no arquivo em `ARQUIVOS md/catalogo-de-personagens.md`.
+4. Se o arquivo tiver mais de 60 linhas pendentes, use `token_optimizer_batcher.py` para gerar blocos enxutos de 35-50 falas ou dividir por faixas de linhas entre subagentes (`gba-dialogue-translator`).
 
 ### Passo 2: Diretrizes Obrigatórias Durante a Tradução (Tier 3)
 Ao preencher a coluna `Tradução Sugerida (PT-BR)`:
-1. **Limite Físico de Tela:** Mantenha cada linha entre `<br>` idealmente entre **1 e 32 caracteres** (Soft Limit: **33-35 chars**; Hard Limit absoluto: **35-36 chars** dependendo do jogo).
-2. **Neutralidade de Gênero para `{PLAYER}`:** Jamais use adjetivos masculinos/femininos diretos para o protagonista compartilhado. Use construções com substantivos (*"Você tem muita coragem!"*, *"O cansaço bateu?"*, *"Boas-vindas!"*, *"Agradeço de coração!"*).
+1. **Limite Físico de Tela (`project_profile.json`):** Mantenha cada linha entre `<br>` idealmente dentro do `ideal_limit` (padrão **1 a 32 chars**), respeitando o `soft_limit` (**33-35 chars**) e jamais ultrapassando o `hard_limit` calibrado para a ROM (padrão **35 chars**).
+2. **Neutralidade de Gênero para `{PLAYER}`:** Quando `gender_mode` for `selectable_neutral`, jamais use adjetivos masculinos/femininos diretos para o protagonista compartilhado. Use construções com substantivos (*"Você tem muita coragem!"*, *"O cansaço bateu?"*, *"Boas-vindas!"*, *"Agradeço de coração!"*).
 3. **Zero Inglês Residual:** Traduza todos os termos comuns e compostos (*Guilda Prateada*, *Torre Central*, *Cidade das Espadas*), mantendo no original apenas nomes próprios de pessoas e continentes/cidades puras.
 4. **Política de Abreviações:**
    - **Diálogos de História:** Zero abreviações (`vc`, `tb`, `pq`, `atq.` são estritamente proibidos).
    - **Menus e Itens (`03-` e `06-`):** Use a Tabela Canônica (`ATQ`, `DEF`, `AGI`, `DUR`, `HP`, `Recup.`, `Esp.`, `Mach.`, `Lanç.`, `Soq.`, `Broc.`, `Min.`, `Nv.`).
 5. **Prevenção de Orfandade:** Nunca termine uma linha antes de `<br>` com monossílabos soltos (`o`, `a`, `de`, `do`, `da`, `em`, `e`, `que`).
 
-### Passo 3: Passagem Obrigatória pelo Quality Gate (Tier 2/3)
-Assim que terminar a tradução do lote/arquivo, **sempre** execute o auditor automatizado:
+### Passo 3: Passagem Obrigatória pelo Quality Gate & Certificador do App Validador (Tier 2/3)
+Assim que terminar a tradução do lote/arquivo, **sempre** execute os dois auditores automatizados:
 ```powershell
-python "02_TRADUCAO_ROMS_GBA/protocolo_extracao/tools/qa_gate_hook.py" "<caminho_do_arquivo.md>" -l 35
+python "02_TRADUCAO_ROMS_GBA/protocolo_extracao/tools/qa_gate_hook.py" "<caminho_do_arquivo.md>"
+python "02_TRADUCAO_ROMS_GBA/protocolo_extracao/tools/md_validator_compat_check.py" "<caminho_do_arquivo.md>"
 ```
-- Se o `qa_gate_hook.py` apontar qualquer erro `🔴 [FAIL]` (estouro de caracteres, tag `{PLAYER}` faltando ou abreviação proibida), **reescreva imediatamente as linhas sinalizadas** e rode o comando de novo até obter `🏆 QUALITY GATE APROVADO!`.
+- Se qualquer erro `🔴` for apontado (estouro de caracteres, tag `{PLAYER}` faltando, abreviação proibida ou coluna desalinhada para o App Validador), **reescreva imediatamente as linhas sinalizadas** e rode os comandos de novo até obter `🏆 QUALITY GATE APROVADO!` e `🏆 CERTIFICADO!`.

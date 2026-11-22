@@ -21,6 +21,7 @@ de tradução antes de liberar para compilação na ROM:
 import os
 import re
 import sys
+import json
 import argparse
 from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
@@ -425,11 +426,35 @@ def audit_file(filepath: Path, hard_limit: int = 35, soft_limit: int = 33) -> Di
     }
 
 
+def resolve_project_limits(target_path: Path, cli_limit: Optional[int], cli_soft: Optional[int]) -> Tuple[int, int]:
+    """Lê project_profile.json da pasta do jogo se os limites não forem forçados via CLI."""
+    hard, soft = 35, 33
+    curr = target_path.resolve()
+    for p in [curr] + list(curr.parents)[:4]:
+        prof = p / "project_profile.json"
+        if prof.is_file():
+            try:
+                data = json.loads(prof.read_text(encoding="utf-8"))
+                m = data.get("metrics", {})
+                if "hard_limit" in m:
+                    hard = int(m["hard_limit"])
+                if "soft_limit" in m:
+                    soft = int(m["soft_limit"])
+            except Exception:
+                pass
+            break
+    if cli_limit is not None:
+        hard = cli_limit
+    if cli_soft is not None:
+        soft = cli_soft
+    return hard, soft
+
+
 def main():
     parser = argparse.ArgumentParser(description="Quality Gate Hook do GBA Localization Studio")
     parser.add_argument("target", help="Arquivo .md ou pasta 'ARQUIVOS md' para auditar")
-    parser.add_argument("--limit", "-l", type=int, default=35, help="Hard Limit de caracteres por linha (padrão: 35)")
-    parser.add_argument("--soft", "-s", type=int, default=33, help="Soft Limit de alerta (padrão: 33)")
+    parser.add_argument("--limit", "-l", type=int, default=None, help="Hard Limit de caracteres por linha (padrão: lido do project_profile.json ou 35)")
+    parser.add_argument("--soft", "-s", type=int, default=None, help="Soft Limit de alerta (padrão: lido do project_profile.json ou 33)")
     parser.add_argument("--strict", action="store_true", help="Falha com exit code 1 também se houver warnings")
 
     args = parser.parse_args()
@@ -438,6 +463,8 @@ def main():
     if not target_path.exists():
         print(f"❌ Alvo não encontrado: {target_path}")
         sys.exit(1)
+
+    hard_limit, soft_limit = resolve_project_limits(target_path, args.limit, args.soft)
 
     files_to_check: List[Path] = []
     if target_path.is_file():
@@ -451,11 +478,11 @@ def main():
     total_warnings = 0
 
     print("=" * 76)
-    print(f"🛡️  GBA LOCALIZATION STUDIO — QUALITY GATE AUDITOR (Hard Limit: {args.limit} chars)")
+    print(f"🛡️  GBA LOCALIZATION STUDIO — QUALITY GATE AUDITOR (Hard Limit: {hard_limit} chars)")
     print("=" * 76)
 
     for f in files_to_check:
-        res = audit_file(f, hard_limit=args.limit, soft_limit=args.soft)
+        res = audit_file(f, hard_limit=hard_limit, soft_limit=soft_limit)
         errs = res["errors"]
         warns = res["warnings"]
         total_errors += len(errs)

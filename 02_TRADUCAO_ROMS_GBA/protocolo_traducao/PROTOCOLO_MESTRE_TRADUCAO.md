@@ -108,9 +108,10 @@ O protocolo determina a utilização de **sintaxe neutra e epicena** para todas 
 
 ---
 
-### 2.5. Coerência Narrativa e Terminológica Unificada
-*   **Fonte Única da Verdade:** Toda a tradução da franquia *Summon Night* (todos os 13 jogos) deve obedecer rigorosamente ao **[Glossário Global da Franquia Summon Night](./GLOSSARIO_GLOBAL_SUMMON_NIGHT.md)** e ao arquivo local de Glossário do projeto (`02-glossario-personagens-e-locais.md`).
-*   Se um item, material ou monstro foi nomeado no Capítulo 1 (ou em outro jogo da franquia), ele **jamais** poderá receber uma variação sinônima nos capítulos ou jogos posteriores.
+### 2.5. Coerência Narrativa, Glossário Soberano por Jogo e Determinância de Série/Spinoffs
+*   **Glossário Global Soberano de Cada Jogo:** **Cada jogo DEVE possuir o SEU próprio Glossário Global** em `ARQUIVOS md/02-glossario-e-terminologias.md` (ou `02-glossario-*.md`). Ele é a fonte primária de verdade para aquele projeto.
+*   **Determinância em Jogos da Mesma Série e Spinoffs:** Quando um jogo fizer parte de uma franquia com múltiplos títulos ou *spinoffs* (ex: os 13 jogos da série *Summon Night*, série *Tales of*, etc.), seu glossário local deve obedecer de forma determinante ao **Glossário Global daquela Série** (ex: **[Glossário Global da Franquia Summon Night](./GLOSSARIO_GLOBAL_SUMMON_NIGHT.md)**, vinculado via `franchise_glossary` no `project_profile.json`). Jogos de franquias distintas jamais compartilham glossários entre si.
+*   Se um item, material, título ou monstro foi nomeado no Capítulo 1 (ou em outro jogo/spinoff da mesma franquia), ele **jamais** poderá receber uma variação sinônima nos capítulos ou jogos posteriores daquela série.
 *   Termos de mecânica (nomes de status, atributos, elementos e técnicas) devem ser idênticos no diálogo, na interface de batalha e nas notificações do sistema.
 
 ---

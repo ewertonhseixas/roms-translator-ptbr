@@ -91,6 +91,8 @@ E para itens/equipamentos:
 > [!IMPORTANT]
 > - Linhas de uma mesma caixa de diálogo devem ser separadas exclusivamente pela tag `<br>`.
 > - O status deve iniciar sempre como `⏳ Pendente` e, após revisão humana no app validador ou compilação, é atualizado para `✅ Validado`.
+> - **Certificação Determinística Obrigatória:** Todo arquivo `.md` extraído da ROM **DEVE** ser validado com `python protocolo_extracao/tools/md_validator_compat_check.py "<pasta_do_jogo>" --autofix` para garantir 100% de funcionamento no App de Validação de Textos (`translation_validator_app.py`).
+> - **Manifesto de Engenharia por ROM (`project_profile.json`):** Cada ROM é um caso à parte de engenharia. O estudo inicial deve gerar `project_profile.json` e `docs/REGRAS_ESPECIFICAS_DO_JOGO.md` documentando o console, ferramentas, limites calibrados de linha e o vínculo entre o Glossário Soberano do Jogo (`02-glossario-*.md`) e o Glossário da Série/Spinoffs.
 
 ---
 

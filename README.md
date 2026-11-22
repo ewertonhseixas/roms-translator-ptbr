@@ -47,7 +47,7 @@ flowchart LR
 
 | Diretório / Arquivo | Função Principal |
 | :--- | :--- |
-| **[`.agents/`](.agents/)** | **GBA Localization Studio:** Hierarquia multi-agente em 3 Tiers (7 personas especializadas) e 5 Skills acionáveis. |
+| **[`.agents/`](.agents/)** | **GBA & Retro Localization Studio:** Hierarquia multi-agente em 3 Tiers (10 personas especializadas) e 9 Skills acionáveis. |
 | **[`00_APPS_E_ATALHOS/`](00_APPS_E_ATALHOS/)** | Atalhos Windows (`.bat`) para iniciar rapidamente o editor de imagens e os validadores visuais de cada projeto local. |
 | **[`02_TRADUCAO_ROMS_GBA/`](02_TRADUCAO_ROMS_GBA/)** | Protocolos Mestres de Extração e Tradução, Glossário Global, templates de projeto, ferramentas CLI de QA/métricas, editor de imagens e docs técnicos. |
 | **[`03_TRADUCAO_ROMS_NDS/`](03_TRADUCAO_ROMS_NDS/)** | Detector de recursos NDS, extrator NitroFS e pipelines completos de texto, fontes NFTR, gráficos e vídeos MODS (*Summon Night* e *Tales of Hearts*). |
@@ -59,8 +59,8 @@ flowchart LR
 ```text
 gba-roms-translator-ptbr/
 ├── .agents/
-│   ├── agents/                            # 7 Personas Especializadas (Tiers 1, 2 e 3)
-│   └── skills/                            # 5 Workflows Acionáveis (Kickoff, Bible, Sprint, QA, Build)
+│   ├── agents/                            # 10 Personas Especializadas (Tiers 1, 2 e 3)
+│   └── skills/                            # 9 Workflows Acionáveis (Kickoff, Validator, Glossary, Bible, Sprint, QA, Build)
 ├── 00_APPS_E_ATALHOS/
 │   ├── editor_de_imagens.bat              # Abre o Editor de Imagens & Paletas no navegador
 │   ├── validator_ui_sn1.bat               # Validador: Summon Night Swordcraft Story 1 (GBA)
@@ -98,9 +98,15 @@ Para manter consistência terminológica, fidelidade dramatúrgica e rigor técn
 
 | Tier | Agentes | Responsabilidades |
 | :---: | :--- | :--- |
-| **Tier 1 — Direção** | `gba-localization-director`<br>`gba-rom-hacking-director` | Governança da Fase 0, Glossário Global, Catálogo de Personagens, engenharia reversa (ARM7TDMI, ponteiros, VWF, compressão) e compilação. |
-| **Tier 2 — Liderança** | `gba-narrative-lead`<br>`gba-graphics-ui-lead` | Definição de *Character Voice*, fatiamento cirúrgico (*Token Economy*), auditoria de gráficos/tiles, proteção do índice 0 de transparência e glifos acentuados. |
-| **Tier 3 — Execução** | `gba-dialogue-translator`<br>`gba-system-arsenal-translator`<br>`gba-strict-qa-auditor` | Tradução dramatúrgica (≤35 chars/linha, gênero neutro em `{PLAYER}`, zero abreviações), localização de menus/itens e auditoria implacável de QA. |
+| **Tier 1 — Direção & Engenharia** | `gba-localization-director`<br>`gba-rom-hacking-director`<br>`rom-reverse-engineering-scout` | Avaliação caso a caso da ROM (`project_profile.json` e `REGRAS_ESPECIFICAS_DO_JOGO.md`), Governança da Fase 0, Glossário Soberano de cada Jogo (vinculado à Série/Spinoffs), Catálogo de Personagens, engenharia reversa multi-console e compilação. |
+| **Tier 2 — Liderança & Integração** | `md-validator-integrator`<br>`gba-narrative-lead`<br>`gba-graphics-ui-lead`<br>`multimedia-fmv-lead` | Certificação determinística de `.md` para o App Validador (`md_validator_compat_check.py`), definição de *Character Voice*, fatiamento cirúrgico (*Token Economy*), auditoria de gráficos/paletas e legendagem de vídeos FMV (`Mobiclip`/`ffmpeg`). |
+| **Tier 3 — Execução** | `gba-dialogue-translator`<br>`gba-system-arsenal-translator`<br>`gba-strict-qa-auditor` | Tradução dramatúrgica (respeitando o `hard_limit` da ROM, gênero neutro em `{PLAYER}`, zero abreviações), localização de menus/itens e auditoria implacável de QA. |
+
+### ⚡ Workflows Acionáveis (`.agents/skills/`)
+- **`rom-project-kickoff`**, **`gba-new-game-kickoff`** & **`nds-new-game-kickoff`**: Diagnóstico de engenharia da ROM/console, definição de ferramentas e criação do `project_profile.json`.
+- **`validator-md-compliance`**: Certificação obrigatória de que 100% dos arquivos `.md` extraídos funcionam no App Validador (`translation_validator_app.py`).
+- **`franchise-glossary-sync`**: Garante que cada jogo tenha seu próprio **Glossário Global Soberano** (`02-glossario-*.md`) determinado pelo Glossário da Série/Spinoffs.
+- **`gba-character-bible`**, **`gba-translate-sprint`**, **`gba-qa-gate`** & **`gba-rom-build-verify`**: Fase 0 obrigatória, sprints de tradução com economia de tokens, Quality Gate 5 Barreiras e build segura da ROM PT-BR.
 
 ---
 
@@ -123,6 +129,7 @@ Ferramenta web em [`02_TRADUCAO_ROMS_GBA/_ferramentas_gerais/image_editor/`](02_
 | Ferramenta | Localização | Finalidade |
 | :--- | :--- | :--- |
 | **`rom_feature_detector.py`** | `02_TRADUCAO_ROMS_GBA/protocolo_extracao/tools/` | Fingerprint da ROM GBA, detecção de compressão BIOS (LZ77/Huffman) e recursos. |
+| **`md_validator_compat_check.py`** | `02_TRADUCAO_ROMS_GBA/protocolo_extracao/tools/` | Certificador e auto-fixer determinístico que garante que todo `.md` extraído funcione no App Validador. |
 | **`metrics_analyzer.py`** | `02_TRADUCAO_ROMS_GBA/protocolo_extracao/tools/` | Estatísticas de largura de linha, quebras `<br>` e relatório de risco de overflow. |
 | **`qa_gate_hook.py`** | `02_TRADUCAO_ROMS_GBA/protocolo_extracao/tools/` | Quality Gate automatizado (overflow >35 chars, gênero neutro, abreviações, órfãs e tags). |
 | **`image_text_auditor.py`** | `02_TRADUCAO_ROMS_GBA/protocolo_extracao/tools/` | Mapeamento de PNGs com texto embutido e auditoria de integridade de paleta/dimensão. |

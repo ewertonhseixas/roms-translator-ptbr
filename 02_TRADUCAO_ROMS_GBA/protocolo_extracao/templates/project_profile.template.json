@@ -1,0 +1,37 @@
+{
+  "$schema": "https://gba-localization-studio.local/schemas/project_profile.v1.json",
+  "id": "_MODELO_NOVO_JOGO",
+  "short_code": "GBA",
+  "title": "Template / Novo Projeto de Tradução",
+  "platform": "GBA",
+  "product_code": "AGB-XXXX-USA",
+  "franchise_id": "GENERIC",
+  "franchise_glossary": null,
+  "local_glossary": "ARQUIVOS md/02-glossario-e-terminologias.md",
+  "character_catalog": "ARQUIVOS md/catalogo-de-personagens.md",
+  "game_specific_rules": "docs/REGRAS_ESPECIFICAS_DO_JOGO.md",
+  "metrics": {
+    "ideal_limit": 32,
+    "soft_limit": 33,
+    "hard_limit": 35,
+    "max_lines_per_box": 3,
+    "item_name_limit": 16,
+    "monster_name_limit": 14,
+    "font_type": "VWF"
+  },
+  "protagonist": {
+    "gender_mode": "selectable_neutral",
+    "male_hero": ["hero_male", "♂ Herói", "Protagonista Masculino"],
+    "female_hero": ["hero_female", "♀ Heroína", "Protagonista Feminina"],
+    "player_tags": ["{PLAYER}", "{PARTNER}", "{SIBLING}", "{MASTER}"]
+  },
+  "engineering": {
+    "console_arch": "ARM7TDMI (GBA 240x160 / 96KB VRAM)",
+    "rom_encoding": "ASCII / Custom Table (.tbl)",
+    "compression_types": ["LZ77 (0x10)", "Huffman (0x20)"],
+    "pointer_format": "32-bit Little-Endian (0x08XXXXXX)",
+    "extractor_script": "tools/extract_rom.py",
+    "compiler_script": "Compilar_ROM_PTBR.bat",
+    "validator_launcher": "Iniciar_Validador_Traducao.bat"
+  }
+}

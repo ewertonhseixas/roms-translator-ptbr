@@ -245,23 +245,64 @@ Você é o especialista de localização de ROMs. Traduza as falas abaixo para *
 def main():
     parser = argparse.ArgumentParser(description="Otimizador de lotes para economia de tokens em LLMs")
     parser.add_argument("dialogue_file", help="Arquivo .md de diálogos para fatiar")
-    parser.add_argument("--glossary", "-g", default="ARQUIVOS md/02-glossario-personagens-e-locais.md", help="Arquivo do glossário")
-    parser.add_argument("--catalog", "-c", default="ARQUIVOS md/catalogo-de-personagens.md", help="Arquivo do catálogo de personagens")
+    parser.add_argument("--glossary", "-g", default=None, help="Arquivo do glossário local (padrão: auto-detectado de 02-glossario*.md)")
+    parser.add_argument("--catalog", "-c", default=None, help="Arquivo do catálogo de personagens")
     parser.add_argument("--chunk-size", "-s", type=int, default=35, help="Quantidade de falas por lote (padrão: 35)")
     parser.add_argument("--out-dir", "-o", default=None, help="Diretório para salvar os prompts fatiados")
-    parser.add_argument("--limit", "-l", type=int, default=36, help="Teto de caracteres por linha")
+    parser.add_argument("--limit", "-l", type=int, default=None, help="Teto de caracteres por linha (padrão: lido de project_profile.json ou 35)")
 
     args = parser.parse_args()
-    diag_path = Path(args.dialogue_file)
+    diag_path = Path(args.dialogue_file).resolve()
 
     if not diag_path.exists():
         print(f"❌ Arquivo não encontrado: {diag_path}")
         sys.exit(1)
 
-    glossary_path = Path(args.glossary)
-    catalog_path = Path(args.catalog)
+    # Descobre diretório do jogo e ARQUIVOS md
+    md_dir = diag_path.parent
+    for p in [diag_path.parent] + list(diag_path.parents)[:3]:
+        if p.name == "ARQUIVOS md":
+            md_dir = p
+            break
+    game_dir = md_dir.parent if md_dir.name == "ARQUIVOS md" else diag_path.parent
+
+    # Lê project_profile.json se existir
+    hard_limit = 35
+    franchise_glossary_path = None
+    prof_path = game_dir / "project_profile.json"
+    if prof_path.is_file():
+        try:
+            pdata = json.loads(prof_path.read_text(encoding="utf-8"))
+            hard_limit = int(pdata.get("metrics", {}).get("hard_limit", 35))
+            fg_rel = pdata.get("franchise_glossary")
+            if fg_rel:
+                cand = (game_dir / fg_rel).resolve()
+                if not cand.is_file():
+                    cand = (game_dir.parent.parent / fg_rel).resolve()
+                if cand.is_file():
+                    franchise_glossary_path = cand
+        except Exception:
+            pass
+
+    if args.limit is not None:
+        hard_limit = args.limit
+
+    if args.glossary:
+        glossary_path = Path(args.glossary)
+    else:
+        g_cands = sorted(md_dir.glob("02-*")) if md_dir.is_dir() else []
+        glossary_path = g_cands[0] if g_cands else md_dir / "02-glossario-e-terminologias.md"
+
+    catalog_path = Path(args.catalog) if args.catalog else md_dir / "catalogo-de-personagens.md"
 
     glossary_terms = load_glossary_terms(glossary_path)
+    if franchise_glossary_path and franchise_glossary_path.is_file():
+        seen_orig = {o.lower() for o, _, _ in glossary_terms}
+        for o, t, c in load_glossary_terms(franchise_glossary_path):
+            if o.lower() not in seen_orig:
+                glossary_terms.append((o, t, c))
+                seen_orig.add(o.lower())
+
     characters = load_character_catalog(catalog_path)
     headers, entries = extract_dialogue_entries(diag_path)
 
@@ -269,9 +310,9 @@ def main():
     chunk_size = args.chunk_size
     total_chunks = (total_entries + chunk_size - 1) // chunk_size
 
-    print(f"⚡ Arquivo: '{diag_path.name}' ({total_entries} entradas de diálogo)")
+    print(f"⚡ Arquivo: '{diag_path.name}' ({total_entries} entradas de diálogo | Hard Limit: {hard_limit} chars)")
     print(f"📦 Dividindo em {total_chunks} lotes de até {chunk_size} entradas cada...")
-    print(f"📖 Glossário carregado: {len(glossary_terms)} termos globais")
+    print(f"📖 Glossário carregado: {len(glossary_terms)} termos (Jogo + Franquia)")
     print(f"🎭 Catálogo carregado: {len(characters)} personagens cadastrados")
 
     out_dir = Path(args.out_dir) if args.out_dir else diag_path.parent / f"prompts_{diag_path.stem}"
@@ -286,7 +327,7 @@ def main():
             total_chunks=total_chunks,
             all_glossary=glossary_terms,
             all_characters=characters,
-            hard_limit=args.limit
+            hard_limit=hard_limit
         )
 
         out_file = out_dir / f"lote_{i+1:02d}_prompt.md"

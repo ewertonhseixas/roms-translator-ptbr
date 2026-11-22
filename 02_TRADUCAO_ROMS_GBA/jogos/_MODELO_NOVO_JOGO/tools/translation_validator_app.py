@@ -217,6 +217,43 @@ class StudioProjectContext:
             base_prof["id"] = self.game_id
             base_prof["short_code"] = "".join(w[0] for w in self.game_id.split("_") if w)[:3].upper() or "GBA"
             base_prof["title"] = self.game_id.replace("_", " ")
+
+        # Sobrescreve dinamicamente a partir do manifesto de engenharia local (project_profile.json)
+        self.franchise_glossary_path: Optional[Path] = None
+        if self.game_id.startswith("Summon_Night"):
+            self.franchise_glossary_path = GLOBAL_GLOSSARY_PATH
+
+        profile_json_path = self.game_dir / "project_profile.json"
+        if profile_json_path.is_file():
+            try:
+                p_data = json.loads(profile_json_path.read_text(encoding="utf-8"))
+                for k in ("id", "short_code", "title", "platform", "product_code", "franchise_id"):
+                    if p_data.get(k):
+                        base_prof[k] = p_data[k]
+                metrics_cfg = p_data.get("metrics", {})
+                if isinstance(metrics_cfg, dict):
+                    if "hard_limit" in metrics_cfg:
+                        base_prof["hard_limit"] = int(metrics_cfg["hard_limit"])
+                    if "soft_limit" in metrics_cfg:
+                        base_prof["soft_limit"] = int(metrics_cfg["soft_limit"])
+                prot_cfg = p_data.get("protagonist", {})
+                if isinstance(prot_cfg, dict):
+                    if isinstance(prot_cfg.get("male_hero"), list) and len(prot_cfg["male_hero"]) >= 3:
+                        base_prof["male_hero"] = tuple(prot_cfg["male_hero"][:3])
+                    if isinstance(prot_cfg.get("female_hero"), list) and len(prot_cfg["female_hero"]) >= 3:
+                        base_prof["female_hero"] = tuple(prot_cfg["female_hero"][:3])
+                fg_rel = p_data.get("franchise_glossary")
+                if fg_rel:
+                    cand_fg = (self.game_dir / fg_rel).resolve()
+                    if not cand_fg.is_file():
+                        cand_fg = (STUDIO_ROOT_DIR / fg_rel).resolve()
+                    if cand_fg.is_file():
+                        self.franchise_glossary_path = cand_fg
+                elif "franchise_glossary" in p_data and p_data["franchise_glossary"] is None:
+                    self.franchise_glossary_path = None
+            except Exception:
+                pass
+
         self.profile = base_prof
 
         # Cache de arquivos parseados: rel_name -> {"mtime": int, "data": dict}
@@ -392,14 +429,14 @@ class StudioProjectContext:
             except Exception:
                 pass
 
-        # 1. Glossário Local do Jogo
+        # 1. Glossário Local Soberano do Jogo (Prioridade Máxima)
         if self.md_dir.is_dir():
             for gf in sorted(self.md_dir.glob("02-*")):
-                parse_glossary_md(gf, "Glossário Local")
+                parse_glossary_md(gf, "Glossário do Jogo")
 
-        # 2. Glossário Global Summon Night
-        if GLOBAL_GLOSSARY_PATH.is_file():
-            parse_glossary_md(GLOBAL_GLOSSARY_PATH, "Glossário Global")
+        # 2. Glossário Global da Franquia/Série (apenas se pertencer à franquia configurada)
+        if self.franchise_glossary_path and self.franchise_glossary_path.is_file():
+            parse_glossary_md(self.franchise_glossary_path, "Glossário da Franquia")
 
     def _build_global_speaker_map(self) -> None:
         self.global_script_speakers.clear()
