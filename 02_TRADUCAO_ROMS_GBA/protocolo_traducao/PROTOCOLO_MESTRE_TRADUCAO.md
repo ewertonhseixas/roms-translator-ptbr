@@ -108,10 +108,10 @@ O protocolo determina a utilização de **sintaxe neutra e epicena** para todas 
 
 ---
 
-### 2.5. Coerência Narrativa, Glossário Soberano por Jogo e Determinância de Série/Spinoffs
-*   **Glossário Global Soberano de Cada Jogo:** **Cada jogo DEVE possuir o SEU próprio Glossário Global** em `ARQUIVOS md/02-glossario-e-terminologias.md` (ou `02-glossario-*.md`). Ele é a fonte primária de verdade para aquele projeto.
-*   **Determinância em Jogos da Mesma Série e Spinoffs:** Quando um jogo fizer parte de uma franquia com múltiplos títulos ou *spinoffs* (ex: os 13 jogos da série *Summon Night*, série *Tales of*, etc.), seu glossário local deve obedecer de forma determinante ao **Glossário Global daquela Série** (ex: **[Glossário Global da Franquia Summon Night](./GLOSSARIO_GLOBAL_SUMMON_NIGHT.md)**, vinculado via `franchise_glossary` no `project_profile.json`). Jogos de franquias distintas jamais compartilham glossários entre si.
-*   Se um item, material, título ou monstro foi nomeado no Capítulo 1 (ou em outro jogo/spinoff da mesma franquia), ele **jamais** poderá receber uma variação sinônima nos capítulos ou jogos posteriores daquela série.
+### 2.5. Coerência Narrativa, Glossário Soberano por Jogo e Primazia de *Swordcraft Story 1* na Série
+*   **Glossário Global Soberano de Cada Jogo:** **Cada jogo DEVE possuir o SEU próprio Glossário Global** em `ARQUIVOS md/02-glossario-personagens-e-locais.md` (ou `02-glossario-e-terminologias.md`). Ele é a fonte primária de verdade para aquele projeto.
+*   **Primazia Estrita de *Summon Night: Swordcraft Story 1* (GBA) na Série:** Na franquia *Summon Night*, o **[Glossário Global da Franquia Summon Night](./GLOSSARIO_GLOBAL_SUMMON_NIGHT.md)** é focado estritamente no primeiro ***Summon Night: Swordcraft Story 1* (GBA)**, onde a localização foi trabalhada com maior profundidade. **O primeiro jogo é o que manda para todas as referências gerais** (classes, títulos, mundos, itens, minérios, magias e bestiário); os outros jogos da série herdam essa base integralmente e apenas adicionam novos termos exclusivos.
+*   Se um item, material, título ou monstro foi nomeado em *Swordcraft Story 1*, ele **jamais** poderá receber uma variação sinônima nos capítulos ou jogos posteriores da série.
 *   Termos de mecânica (nomes de status, atributos, elementos e técnicas) devem ser idênticos no diálogo, na interface de batalha e nas notificações do sistema.
 
 ---
@@ -128,13 +128,13 @@ O protocolo determina a utilização de **sintaxe neutra e epicena** para todas 
 ---
 
 ### 2.7. Ciclo de Vida dos Termos Adaptados
-Termos conceituais próprios do universo do jogo que resultam em expressões longas em português devem seguir um ciclo de 3 fases para balancear ambientação e economia de caracteres:
+Muitos termos são introduzidos no jogo por extenso, mas usados de forma abreviada em diálogos (`Craftknight > Cavaleiro Forjador > Cavaleiro` e `Craftlord > Lorde Forjador > Lorde`) para balancear ambientação e economia de caracteres:
 
 | Fase | Contexto de Aplicação | Regra de Uso | Exemplo de Aplicação |
 | :--- | :--- | :--- | :--- |
-| **Fase 1: Introdução** | 1ª aparição, tutoriais, lore oficial e momentos solenes | Tradução completa e explicativa | *"Craftlord"* $\rightarrow$ **Lorde Forjador**<br>*"Craftknight"* $\rightarrow$ **Cavaleiro Forjador**<br>*"Summon Stray"* $\rightarrow$ **Invocação Errante**<br>*"Summonite"* $\rightarrow$ **Pedra de Invocação** |
-| **Fase 2: Diálogo Comum** | Conversas cotidianas, ritmo rápido de ação | Forma adaptada e enxuta | **Lorde**, **Cavaleiro**, **Forjador**, **Errante**, **Guardião**, **Invocação** |
-| **Fase 3: Interface & Menus** | Listas de status, tabelas de títulos e menus | Forma sintetizada ou sigla oficial | **Lorde**, **Forjador**, **Errante**, **Pedra Invoc.** |
+| **Fase 1: Introdução** | 1ª aparição, tutoriais, lore oficial e momentos solenes | Tradução completa e explicativa | `Craftknight` $\rightarrow$ **Cavaleiro Forjador**<br>`Craftlord` $\rightarrow$ **Lorde Forjador**<br>`Stray Summon` $\rightarrow$ **Invocação Errante**<br>`Summonite` $\rightarrow$ **Pedra de Invocação** |
+| **Fase 2: Diálogo Comum** | Conversas cotidianas, ritmo rápido de ação | Forma abreviada e natural nos diálogos | `Craftknight` $\rightarrow$ **Cavaleiro**<br>`Craftlord` $\rightarrow$ **Lorde** *(ou Mestre)*<br>`Stray Summon` $\rightarrow$ **Errante**<br>`Guardian Beast` $\rightarrow$ **Fera Guardiã / Guardião / Parceiro** |
+| **Fase 3: Interface & Menus** | Listas de status, tabelas de títulos e menus | Forma sintetizada ou sigla oficial | **Cavaleiro**, **Lorde**, **Errante**, **Pedra Invoc.** |
 
 ---
 

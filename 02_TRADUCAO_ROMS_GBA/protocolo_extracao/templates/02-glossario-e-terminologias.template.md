@@ -21,17 +21,17 @@ Variáveis de substituição dinâmica em tempo de execução (ex: nome do jogad
 
 ---
 
-## 2. Termos Centrais do Universo e Lore (*Glossário Base — Summon Night*)
+## 2. Termos Centrais do Universo e Lore (*Glossário Base — Matriz Soberana: Summon Night: Swordcraft Story 1*)
 
-> **Nota:** Consulte sempre o **[Glossário Global da Franquia Summon Night](../../protocolo_traducao/GLOSSARIO_GLOBAL_SUMMON_NIGHT.md)** para a lista completa de mundos, facções, itens, magias e bestiário compartilhados entre os 13 jogos.
+> **Nota:** Consulte sempre o **[Glossário Global da Franquia Summon Night](../../protocolo_traducao/GLOSSARIO_GLOBAL_SUMMON_NIGHT.md)** — focado estritamente em ***Summon Night: Swordcraft Story 1* (GBA)** como referência geral mandatória. Novos jogos da série herdam esta base e apenas adicionam termos inéditos.
 
 | Termo Original (EN-US / JP) | Tradução Canônica (1ª Aparição / Lore) | Forma Curta (Diálogos / UI) | Contexto e Definição no Jogo | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **Craftknight** (*鍛冶師 / クラフトナイト*) | **Cavaleiro Forjador** | **Cavaleiro / Forjador** | Guerreiros-artesãos que forjam e empunham suas próprias armas. | ✅ Canônico |
-| **Craftlord** (*鍛冶王 / クラフトロード*) | **Lorde Forjador** | **Lorde** | O mais alto título de maestria entre os Cavaleiros Forjadores. | ✅ Canônico |
+| **Craftknight** (*鍛冶師 / クラフトナイト*) | **Cavaleiro Forjador** | **Cavaleiro** | Guerreiros-artesãos que forjam e empunham suas próprias armas (`Craftknight > Cavaleiro Forjador > Cavaleiro`). | ✅ Canônico |
+| **Craftlord** (*鍛冶王 / クラフトロード*) | **Lorde Forjador** | **Lorde** | O mais alto título de maestria entre os Cavaleiros Forjadores (`Craftlord > Lorde Forjador > Lorde`). | ✅ Canônico |
 | **Summoner** (*召喚師*) | **Invocador(a)** | **Invocador** | Conjurador capaz de realizar rituais e pactos de invocação. | ✅ Canônico |
-| **Summon Beast** (*召喚獣*) | **Fera Invocada / Invocação** | **Invocação** | Seres chamados dos mundos paralelos (Silturn, Loreilal, Sapureth, Maetropa). | ✅ Canônico |
-| **Guardian Beast** (*護衛獣*) | **Fera Guardiã** | **Guardião / Parceiro** | A criatura invocada ligada por pacto que protege o protagonista. | ✅ Canônico |
+| **Summon Beast** (*召喚獣*) | **Fera Invocada** | **Invocação** | Seres chamados dos mundos paralelos (Silturn, Loreilal, Sapureth, Maetropa). | ✅ Canônico |
+| **Guardian Beast** (*護衛獣*) | **Fera Guardiã** | **Fera Guardiã / Guardião / Parceiro** | A criatura invocada ligada por pacto que protege o protagonista. | ✅ Canônico |
 | **Summon Stray / Stray** (*野良召喚獣*) | **Invocação Errante** | **Errante** | Invocação sem mestre que vaga livremente pelas masmorras. | ✅ Canônico |
 | **Summonite** (*召喚石*) | **Pedra de Invocação** | **Pedra de Invocação** *(UI: Pedra Invoc.)* | Mineral místico usado para invocar criaturas e canalizar magias. | ✅ Canônico |
 | **Mystic Ore** (*魔鉱石*) | **Minério Místico** | **Minério Místico** *(UI: Min. Místico)* | Minério que confere atributos mágicos às armas. | ✅ Canônico |

@@ -9,9 +9,10 @@ Este repositório opera sob a arquitetura de estúdio em **3 Tiers** inspirada n
 1. **Cada ROM é um Caso à Parte de Engenharia (`project_profile.json` + `docs/REGRAS_ESPECIFICAS_DO_JOGO.md`):**
    - Ao iniciar qualquer novo projeto, os agentes e skills devem avaliar a ROM em questão, o console (`GBA`, `NDS`, `SNES`, `Mega Drive`, `PS1`), a arquitetura de ponteiros/compressão, a fonte (`VWF`, monoespaçada, `NFTR`) e selecionar/construir as ferramentas necessárias para aquele caso específico.
    - As particularidades e limites calibrados da ROM são registrados em `project_profile.json` e `docs/REGRAS_ESPECIFICAS_DO_JOGO.md`, podendo adaptar o comportamento dos agentes e skills para aquele jogo.
-2. **Soberania do Glossário Global de Cada Jogo & Determinância de Série/Spinoffs:**
-   - **Cada jogo DEVE ter o SEU Glossário Global Soberano** em `ARQUIVOS md/02-glossario-e-terminologias.md` (ou `02-glossario-*.md`).
-   - Quando o jogo pertencer a uma série ou for um *spinoff* (ex: franquia *Summon Night*, franquia *Tales of*), seu glossário local deve estar sincronizado de forma determinante com o **Glossário Global daquela Série** (`protocolo_traducao/GLOSSARIO_GLOBAL_<SERIE>.md`, vinculado em `project_profile.json`), garantindo 100% de consistência entre títulos do mesmo universo sem jamais misturar franquias diferentes.
+2. **Soberania do Glossário Global de Cada Jogo & Primazia de *Swordcraft Story 1* na Série:**
+   - **Cada jogo DEVE ter o SEU Glossário Global Soberano** em `ARQUIVOS md/02-glossario-personagens-e-locais.md` (ou `02-glossario-e-terminologias.md`).
+   - Na franquia *Summon Night*, o **Glossário Global da Série** (`protocolo_traducao/GLOSSARIO_GLOBAL_SUMMON_NIGHT.md`) é focado estritamente no primeiro ***Summon Night: Swordcraft Story 1* (GBA)**, onde o trabalho de localização foi mais detalhado, respeitando o ciclo de introdução do termo inteiro e uso abreviado nos diálogos (`Craftknight > Cavaleiro Forjador > Cavaleiro`, `Craftlord > Lorde Forjador > Lorde`).
+   - **O primeiro jogo é o que manda para todas as referências gerais.** Os demais jogos da série herdam obrigatoriamente a base do primeiro e apenas adicionam novos termos exclusivos de suas tramas.
 3. **Compatibilidade Determinística com o App de Validação de Textos (`md_validator_compat_check.py`):**
    - É **determinante** que todo arquivo `.md` de textos retirado da ROM funcione perfeitamente no App de Validação de Textos (`translation_validator_app.py`).
    - O agente `md-validator-integrator` e a skill `validator-md-compliance` devem validar todo `.md` extraído ou editado executando `md_validator_compat_check.py`.

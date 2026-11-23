@@ -105,15 +105,17 @@ Para evitar quebras de imersão ("Você foi muito corajoso" quando jogando com P
 
 ### 2.6. Termos Adaptados: Estratégia de Introdução vs. Uso Comum
 
+Muitos termos centrais são introduzidos por extenso no jogo, mas usados de forma abreviada nos diálogos (`Craftknight > Cavaleiro Forjador > Cavaleiro` e `Craftlord > Lorde Forjador > Lorde`):
+
 | Termo Original | 1ª Apresentação (Lore / Solene / Tutorial) | Uso Corriqueiro nos Diálogos | Uso em Menus e UI | Motivo da Adaptação |
 | :--- | :--- | :--- | :--- | :--- |
-| **Craftlord** | **Lorde da Forja** *(ou Mestre-Ferreiro)* | **Lorde** / **Mestre** | **Lorde** | Economiza até 10 caracteres por ocorrência. |
-| **Craftknight** | **Cavaleiro-Ferreiro** *(ou Forjador)* | **Ferreiro** / **Forjador** | **Forjador** | Evita travamento de leitura em frases de ação. |
-| **Guardian Beast** | **Fera Guardiã** | **Guardião** / **Parceiro** | **Guardião** | Mais fluido e fácil de flexionar. |
-| **Summon Beast / Creature** | **Criatura Invocada** | **Invocação** / **Criatura** | **Invocação** | Reduz de 17 para 9 caracteres. |
+| **Craftknight** | **Cavaleiro Forjador** *(ou Cavaleira Forjadora)* | **Cavaleiro** *(ou Cavaleira)* | **Cavaleiro** | `Craftknight > Cavaleiro Forjador > Cavaleiro`. Mantém fluidez nos diálogos. |
+| **Craftlord** | **Lorde Forjador** *(ou Lorde Forjadora)* | **Lorde** / **Mestre** | **Lorde** | `Craftlord > Lorde Forjador > Lorde`. Economiza espaço na caixa de diálogo. |
+| **Guardian Beast** | **Fera Guardiã** | **Fera Guardiã** / **Guardião** / **Parceiro** | **Guardião** | Mais fluido e fácil de flexionar. |
+| **Summon Beast / Creature** | **Fera Invocada** | **Invocação** / **Fera Invocada** | **Invocação** | Reduz de 13 para 9 caracteres quando necessário. |
 | **Stray Summon ("Stray")** | **Invocação Errante** | **Errante** | **Errante** | Elimina repetição pesada nos diálogos de masmorra. |
 | **Mystic Ore** | **Minério Místico** | **Minério Místico** | **Min. Místico** | Padrão claro. |
-| **Summonite** | **Pedra de Invocação (Summonite)** | **Summonite** | **Summonite** | Mineral com nome próprio estabelecido no universo. |
+| **Summonite** | **Pedra de Invocação** | **Pedra de Invocação** | **Pedra Invoc.** *(Item: Gema Invocação)* | Traduzido integralmente em português. |
 
 ---
 
