@@ -1,0 +1,28 @@
+{
+  "$schema": "https://gba-localization-studio.local/schemas/project_profile.v1.json",
+  "id": "Tales of Hearts - Anime Movie Edition (Japan)",
+  "short_code": "TOH",
+  "title": "Tales of Hearts — Anime Movie Edition",
+  "platform": "NDS",
+  "product_code": "NTR-CTUJ-JPN",
+  "franchise_id": "TALES_OF",
+  "franchise_glossary": "ARQUIVOS md/02-glossario-e-terminologias.md",
+  "local_glossary": "ARQUIVOS md/02-glossario-e-terminologias.md",
+  "character_catalog": "ARQUIVOS md/catalogo-de-personagens.md",
+  "game_specific_rules": "docs/REGRAS_ESPECIFICAS_DO_JOGO.md",
+  "metrics": {
+    "ideal_limit": 32,
+    "soft_limit": 33,
+    "hard_limit": 35,
+    "max_lines_per_box": 3,
+    "item_name_limit": 24,
+    "monster_name_limit": 24,
+    "font_type": "NFTR"
+  },
+  "protagonist": {
+    "gender_mode": "fixed_male",
+    "male_hero": ["shing", "♂ Shing", "Protagonista (Portador de Soma)"],
+    "female_hero": ["kohaku", "♀ Kohaku", "Heroína Central"],
+    "player_tags": ["%s"]
+  }
+}

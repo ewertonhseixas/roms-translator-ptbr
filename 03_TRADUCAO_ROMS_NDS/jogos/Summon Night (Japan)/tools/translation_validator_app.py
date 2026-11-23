@@ -25,6 +25,7 @@ Principais Recursos da Nova Versão (Studio Edition v2.0):
 """
 
 import json
+import hashlib
 import os
 import re
 import subprocess
@@ -37,8 +38,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import parse_qs, urlparse
 
-from translation_markdown import split_md_row
-
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 if hasattr(sys.stderr, "reconfigure"):
@@ -46,11 +45,23 @@ if hasattr(sys.stderr, "reconfigure"):
 
 # Caminhos estruturais do estúdio
 SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 DEFAULT_GAME_DIR = SCRIPT_DIR.parent
 JOGOS_ROOT_DIR = DEFAULT_GAME_DIR.parent
 STUDIO_ROOT_DIR = JOGOS_ROOT_DIR.parent
-PROTOCOLO_EXTRACAO_DIR = STUDIO_ROOT_DIR.parent / "02_TRADUCAO_ROMS_GBA" / "protocolo_extracao"
-PROTOCOLO_TRADUCAO_DIR = STUDIO_ROOT_DIR.parent / "02_TRADUCAO_ROMS_GBA" / "protocolo_traducao"
+WORKSPACE_ROOT_DIR = STUDIO_ROOT_DIR.parent
+ALL_JOGOS_DIRS: List[Path] = [
+    d for d in (
+        WORKSPACE_ROOT_DIR / "02_TRADUCAO_ROMS_GBA" / "jogos",
+        WORKSPACE_ROOT_DIR / "03_TRADUCAO_ROMS_NDS" / "jogos",
+        JOGOS_ROOT_DIR,
+    ) if d.is_dir()
+]
+# Deduplica preservando a ordem
+ALL_JOGOS_DIRS = list(dict.fromkeys(d.resolve() for d in ALL_JOGOS_DIRS))
+PROTOCOLO_EXTRACAO_DIR = WORKSPACE_ROOT_DIR / "02_TRADUCAO_ROMS_GBA" / "protocolo_extracao"
+PROTOCOLO_TRADUCAO_DIR = WORKSPACE_ROOT_DIR / "02_TRADUCAO_ROMS_GBA" / "protocolo_traducao"
 GLOBAL_GLOSSARY_PATH = PROTOCOLO_TRADUCAO_DIR / "GLOSSARIO_GLOBAL_SUMMON_NIGHT.md"
 
 # Regex para extrair alternativa inline: `Texto A` *(ou `Texto B`)*
@@ -156,27 +167,17 @@ CANONICAL_ABBREVIATIONS = [
 # PERFIS DE JOGOS CONHECIDOS E ESTADO ATIVO DO SERVIDOR
 # ============================================================================
 GAME_PROFILES: Dict[str, Dict[str, Any]] = {
-    "Summon Night (Japan)": {
-        "id": "Summon Night (Japan)",
-        "short_code": "SN NDS",
-        "title": "Summon Night (Nintendo DS)",
-        "platform": "NDS",
-        "product_code": "YSMJ",
-        "male_hero": ("hayato", "Hayato / Touya", "Protagonistas"),
-        "female_hero": ("aya", "Aya / Natsumi", "Protagonistas"),
-        "hard_limit": 22,
-        "soft_limit": 21,
-    },
     "Summon_Night_Swordcraft_Story_1": {
         "id": "Summon_Night_Swordcraft_Story_1",
         "short_code": "SN1",
         "title": "Summon Night: Swordcraft Story 1",
         "platform": "GBA",
         "product_code": "AGB-AB4E-USA",
-        "male_hero": ("cleru", "♂ Cleru", "Herói (Aprendiz de Forjador)"),
-        "female_hero": ("pratty", "♀ Pratty", "Heroína (Aprendiz de Forjadora)"),
-        "hard_limit": 35,
+        "male_hero": ("cleru", "♂ Cleru", "Herói (Aprendiz de Cavaleiro Forjador)"),
+        "female_hero": ("pratty", "♀ Pratty", "Heroína (Aprendiz de Cavaleira Forjadora)"),
+        "ideal_limit": 32,
         "soft_limit": 33,
+        "hard_limit": 35,
     },
     "Summon_Night_Swordcraft_Story_2": {
         "id": "Summon_Night_Swordcraft_Story_2",
@@ -184,10 +185,11 @@ GAME_PROFILES: Dict[str, Dict[str, Any]] = {
         "title": "Summon Night: Swordcraft Story 2",
         "platform": "GBA",
         "product_code": "AGB-BSKE-USA",
-        "male_hero": ("edgar", "♂ Edgar", "Herói (Aprendiz de Forjador)"),
-        "female_hero": ("aera", "♀ Aera", "Heroína (Aprendiz de Forjadora)"),
-        "hard_limit": 35,
+        "male_hero": ("edgar", "♂ Edgar", "Herói (Aprendiz de Cavaleiro Forjador)"),
+        "female_hero": ("aera", "♀ Aera", "Heroína (Aprendiz de Cavaleira Forjadora)"),
+        "ideal_limit": 32,
         "soft_limit": 33,
+        "hard_limit": 35,
     },
     "Summon_Night_Swordcraft_Story_3": {
         "id": "Summon_Night_Swordcraft_Story_3",
@@ -197,8 +199,33 @@ GAME_PROFILES: Dict[str, Dict[str, Any]] = {
         "product_code": "AGB-B3CJ-JPN",
         "male_hero": ("ritchie", "♂ Ritchie", "Herói (Aprendiz de Cavaleiro Forjador)"),
         "female_hero": ("rif", "♀ Rif", "Heroína (Aprendiz de Cavaleira Forjadora)"),
-        "hard_limit": 35,
+        "ideal_limit": 32,
         "soft_limit": 33,
+        "hard_limit": 35,
+    },
+    "Summon Night (Japan)": {
+        "id": "Summon Night (Japan)",
+        "short_code": "SN NDS",
+        "title": "Summon Night (Nintendo DS)",
+        "platform": "NDS",
+        "product_code": "NTR-YSMJ-JPN",
+        "male_hero": ("hayato", "♂ Hayato / Touya", "Protagonistas Masculinos"),
+        "female_hero": ("aya", "♀ Aya / Natsumi", "Protagonistas Femininas"),
+        "ideal_limit": 20,
+        "soft_limit": 21,
+        "hard_limit": 22,
+    },
+    "Tales of Hearts - Anime Movie Edition (Japan)": {
+        "id": "Tales of Hearts - Anime Movie Edition (Japan)",
+        "short_code": "TOH",
+        "title": "Tales of Hearts — Anime Movie Edition",
+        "platform": "NDS",
+        "product_code": "NTR-CTUJ-JPN",
+        "male_hero": ("shing", "♂ Shing", "Protagonista (Portador de Soma)"),
+        "female_hero": ("kohaku", "♀ Kohaku", "Heroína Central"),
+        "ideal_limit": 32,
+        "soft_limit": 33,
+        "hard_limit": 35,
     },
     "_MODELO_NOVO_JOGO": {
         "id": "_MODELO_NOVO_JOGO",
@@ -208,10 +235,40 @@ GAME_PROFILES: Dict[str, Dict[str, Any]] = {
         "product_code": "AGB-XXXX-USA",
         "male_hero": ("hero_male", "♂ Herói", "Protagonista Masculino"),
         "female_hero": ("hero_female", "♀ Heroína", "Protagonista Feminina"),
-        "hard_limit": 35,
+        "ideal_limit": 32,
         "soft_limit": 33,
+        "hard_limit": 35,
     },
 }
+
+
+def load_game_profile(game_dir: Path) -> Dict[str, Any]:
+    gid = game_dir.name
+    base_prof = GAME_PROFILES.get(gid, GAME_PROFILES["_MODELO_NOVO_JOGO"]).copy()
+    if gid not in GAME_PROFILES:
+        base_prof["id"] = gid
+        base_prof["short_code"] = "".join(w[0] for w in gid.split("_") if w)[:3].upper() or "GBA"
+        base_prof["title"] = gid.replace("_", " ")
+
+    prof_json = game_dir / "project_profile.json"
+    if prof_json.is_file():
+        try:
+            data = json.loads(prof_json.read_text(encoding="utf-8"))
+            for k in ("id", "short_code", "title", "platform", "product_code"):
+                if data.get(k):
+                    base_prof[k] = data[k]
+            metrics = data.get("metrics") or {}
+            for k in ("ideal_limit", "soft_limit", "hard_limit"):
+                if metrics.get(k) is not None:
+                    base_prof[k] = int(metrics[k])
+            prot = data.get("protagonist") or {}
+            if isinstance(prot.get("male_hero"), list) and len(prot["male_hero"]) >= 3:
+                base_prof["male_hero"] = tuple(prot["male_hero"][:3])
+            if isinstance(prot.get("female_hero"), list) and len(prot["female_hero"]) >= 3:
+                base_prof["female_hero"] = tuple(prot["female_hero"][:3])
+        except Exception:
+            pass
+    return base_prof
 
 
 class StudioProjectContext:
@@ -225,12 +282,7 @@ class StudioProjectContext:
         self.embedded_js_path = self.tools_dir / "embedded_md_data.js"
         self.ui_html_path = self.tools_dir / "validator_ui.html"
 
-        base_prof = GAME_PROFILES.get(self.game_id, GAME_PROFILES["_MODELO_NOVO_JOGO"]).copy()
-        if self.game_id not in GAME_PROFILES:
-            base_prof["id"] = self.game_id
-            base_prof["short_code"] = "".join(w[0] for w in self.game_id.split("_") if w)[:3].upper() or "GBA"
-            base_prof["title"] = self.game_id.replace("_", " ")
-        self.profile = base_prof
+        self.profile = load_game_profile(self.game_dir)
 
         # Cache de arquivos parseados: rel_name -> {"mtime": int, "data": dict}
         self.file_cache: Dict[str, Dict[str, Any]] = {}
@@ -452,10 +504,12 @@ def get_or_load_project(game_id: Optional[str] = None) -> StudioProjectContext:
         return ACTIVE_PROJECT
 
     target_dir = DEFAULT_GAME_DIR
-    if game_id and JOGOS_ROOT_DIR.is_dir():
-        cand = JOGOS_ROOT_DIR / game_id
-        if cand.is_dir() and (cand / "ARQUIVOS md").is_dir():
-            target_dir = cand
+    if game_id:
+        for root_d in ALL_JOGOS_DIRS:
+            cand = root_d / game_id
+            if cand.is_dir() and (cand / "ARQUIVOS md").is_dir():
+                target_dir = cand
+                break
 
     gid = target_dir.name
     if gid not in PROJECTS_REGISTRY:
@@ -468,9 +522,26 @@ def get_or_load_project(game_id: Optional[str] = None) -> StudioProjectContext:
 
 
 def list_available_projects() -> List[Dict[str, Any]]:
-    """Lista todos os jogos disponíveis na pasta `02_TRADUCAO_ROMS_GBA/jogos/`."""
+    """Lista todos os jogos disponíveis nas pastas `02_TRADUCAO_ROMS_GBA/jogos/` e `03_TRADUCAO_ROMS_NDS/jogos/`."""
     projects = []
-    if not JOGOS_ROOT_DIR.is_dir():
+    seen_ids = set()
+    active_id = ACTIVE_PROJECT.game_id if ACTIVE_PROJECT else DEFAULT_GAME_DIR.name
+
+    for root_d in ALL_JOGOS_DIRS:
+        if not root_d.is_dir():
+            continue
+        for d in sorted(root_d.iterdir(), key=lambda p: (p.name.startswith("_"), p.name)):
+            if d.is_dir() and (d / "ARQUIVOS md").is_dir() and d.name not in seen_ids:
+                seen_ids.add(d.name)
+                prof = load_game_profile(d)
+                projects.append({
+                    "id": d.name,
+                    "short_code": prof["short_code"],
+                    "title": prof["title"],
+                    "active": d.name == active_id,
+                })
+
+    if not projects:
         proj = get_or_load_project()
         return [{
             "id": proj.game_id,
@@ -478,27 +549,21 @@ def list_available_projects() -> List[Dict[str, Any]]:
             "title": proj.profile["title"],
             "active": True,
         }]
-
-    active_id = ACTIVE_PROJECT.game_id if ACTIVE_PROJECT else DEFAULT_GAME_DIR.name
-    for d in sorted(JOGOS_ROOT_DIR.iterdir(), key=lambda p: (p.name.startswith("_"), p.name)):
-        if d.is_dir() and (d / "ARQUIVOS md").is_dir():
-            prof = GAME_PROFILES.get(d.name, {
-                "id": d.name,
-                "short_code": "".join(w[0] for w in d.name.split("_") if w)[:3].upper() or "GBA",
-                "title": d.name.replace("_", " "),
-            })
-            projects.append({
-                "id": d.name,
-                "short_code": prof["short_code"],
-                "title": prof["title"],
-                "active": d.name == active_id,
-            })
     return projects
 
 
 # ============================================================================
 # FUNÇÕES UTILITÁRIAS DE MARKDOWN E TABELAS
 # ============================================================================
+def split_md_row(line: str) -> List[str]:
+    s = line.strip()
+    if s.startswith("|"):
+        s = s[1:]
+    if s.endswith("|"):
+        s = s[:-1]
+    return [c.strip() for c in re.split(r"(?<!\\)\|", s)]
+
+
 def join_md_row(cells: List[str]) -> str:
     return "| " + " | ".join(cells) + " |"
 
@@ -522,11 +587,13 @@ def clean_cell_to_text(raw: str) -> Tuple[str, str, str]:
         opt_raw = m.group(2).strip()
         opt_text = _strip_md_formatting(opt_raw)
     main_text = _strip_md_formatting(s)
+    main_text = main_text.replace(r"\|", "|").replace("<page>", "\f")
     return main_text, opt_text, ""
 
 
 def text_to_md_cell(text: str, use_backticks: bool = True) -> str:
-    lines = [ln.replace("|", "/").rstrip("\r") for ln in text.split("\n")]
+    text = text.replace("\f", "<page>")
+    lines = [ln.replace("|", r"\|").rstrip("\r") for ln in text.split("\n")]
     if not lines:
         return ""
     if use_backticks:
@@ -605,7 +672,8 @@ def extract_dynamic_tags(text: str) -> List[str]:
 
 def is_system_or_item_filename(filename: str) -> bool:
     name_low = Path(filename).name.lower()
-    return any(k in name_low for k in ("00_", "02-", "03-", "04-", "05-", "06-", "07-", "sistema", "interface", "itens", "armas", "bestiario", "equipamento"))
+    return name_low.startswith(("00_", "02-", "03-", "04-", "05-", "06-", "07-")) or any(
+        k in name_low for k in ("sistema", "interface", "itens", "armas", "bestiario", "equipamento", "tecnico"))
 
 
 def evaluate_entry_qa(
@@ -644,33 +712,35 @@ def evaluate_entry_qa(
                 })
 
     # Gate 2 & Gate 3: Limite de Caracteres e Orfandade Textual
-    pt_lines = [ln for ln in pt_text.split("\n") if ln.strip()]
-    for idx, ln in enumerate(pt_lines):
-        c_len = len(ln)
-        if c_len > hard_limit:
-            issues.append({
-                "gate": "GATE 2: OVERFLOW",
-                "severity": "error",
-                "msg": f"Linha {idx+1} tem {c_len} chars (Máx={hard_limit}, Excesso=+{c_len - hard_limit})",
-            })
-        elif c_len >= soft_limit:
-            issues.append({
-                "gate": "GATE 2: SOFT LIMIT",
-                "severity": "warn",
-                "msg": f"Linha {idx+1} na zona de atenção ({c_len}/{hard_limit} chars)",
-            })
+    for page_part in pt_text.split("\f"):
+        pt_lines = [re.sub(r"^\t?\([A-Za-z0-9_]+\)", "", ln.strip()).strip() for ln in page_part.split("\n") if ln.strip()]
+        pt_lines = [ln for ln in pt_lines if ln]
+        for idx, ln in enumerate(pt_lines):
+            c_len = len(ln)
+            if c_len > hard_limit:
+                issues.append({
+                    "gate": "GATE 2: OVERFLOW",
+                    "severity": "error",
+                    "msg": f"Linha {idx+1} tem {c_len} chars (Máx={hard_limit}, Excesso=+{c_len - hard_limit})",
+                })
+            elif c_len >= soft_limit:
+                issues.append({
+                    "gate": "GATE 2: SOFT LIMIT",
+                    "severity": "warn",
+                    "msg": f"Linha {idx+1} na zona de atenção ({c_len}/{hard_limit} chars)",
+                })
 
-        # Gate 3: Orfandade no fim da linha antes de <br>
-        if idx < len(pt_lines) - 1:
-            words = ln.split()
-            if words:
-                last_word = re.sub(r"[^\wÀ-ÿ]", "", words[-1]).lower()
-                if last_word in ORPHAN_WORDS:
-                    issues.append({
-                        "gate": "GATE 3: ORFANDADE",
-                        "severity": "warn",
-                        "msg": f"Palavra curta '{words[-1]}' isolada no fim da Linha {idx+1} antes da quebra",
-                    })
+            # Gate 3: Orfandade no fim da linha antes de <br>
+            if idx < len(pt_lines) - 1:
+                words = ln.split()
+                if words:
+                    last_word = re.sub(r"[^\wÀ-ÿ]", "", words[-1]).lower()
+                    if last_word in ORPHAN_WORDS:
+                        issues.append({
+                            "gate": "GATE 3: ORFANDADE",
+                            "severity": "warn",
+                            "msg": f"Palavra curta '{words[-1]}' isolada no fim da Linha {idx+1} antes da quebra",
+                        })
 
     # Verifica descrição se houver (limite de 36 chars por linha de descrição)
     if pt_desc:
@@ -1226,7 +1296,7 @@ def parse_md_file(filepath: Path, proj: Optional[StudioProjectContext] = None, f
         if cached["mtime"] == mtime:
             return cached["data"]
 
-    text = filepath.read_text(encoding="utf-8-sig")
+    text = filepath.read_text(encoding="utf-8-sig", errors="ignore")
     lines = text.splitlines()
 
     doc_title = ""
@@ -1316,7 +1386,7 @@ def parse_md_file(filepath: Path, proj: Optional[StudioProjectContext] = None, f
                 status_str = "⏳ Pendente"
                 if col_map["status_col"] is not None and col_map["status_col"] < len(row_cells):
                     st_cell = row_cells[col_map["status_col"]]
-                    if any(w in st_cell.lower() for w in ("✅", "🟢", "validado", "canônico", "[x]")):
+                    if re.search(r"^(?:✅|🟢|\[x\]|validado\b|canônico\b)", st_cell.strip(), re.I):
                         validated = True
                         status_str = "✅ Validado"
                 elif col_map["status_col"] is None and pt_text.strip() and not pt_text.startswith("["):
@@ -1324,8 +1394,11 @@ def parse_md_file(filepath: Path, proj: Optional[StudioProjectContext] = None, f
                     status_str = "✅ Validado"
 
                 use_bold = pt_raw.strip().startswith("**")
+                has_desc_flag = (col_map["pt_desc_col"] is not None and col_map["pt_desc_col"] != col_map["pt_col"])
+                entry_idx = len(entries)
 
                 entries.append({
+                    "index": entry_idx,
                     "line_index": i,
                     "header_line_index": header_line_idx,
                     "sep_line_index": sep_line_idx,
@@ -1338,7 +1411,9 @@ def parse_md_file(filepath: Path, proj: Optional[StudioProjectContext] = None, f
                     "pt_text": pt_text,
                     "pt_desc": pt_desc,
                     "opt_text": opt_text,
-                    "has_desc": (col_map["pt_desc_col"] is not None and col_map["pt_desc_col"] != col_map["pt_col"]),
+                    "pt_alt": opt_text,
+                    "has_desc": has_desc_flag,
+                    "has_desc_col": has_desc_flag,
                     "validated": validated,
                     "status_str": status_str,
                     "use_bold": use_bold,
@@ -1379,7 +1454,12 @@ def list_translation_md_files(proj: Optional[StudioProjectContext] = None) -> Li
 
     files = sorted(
         proj.md_dir.rglob("*.md"),
-        key=lambda p: (re.sub(r"-lote-\d+$", "", p.stem), p.stem, p.as_posix()),
+        key=lambda p: (
+            0 if p.name.startswith("lote-") else 1,
+            re.sub(r"-lote-\d+$", "", p.stem),
+            p.stem,
+            p.as_posix(),
+        ),
     )
     result = []
     for f in files:
@@ -1496,17 +1576,24 @@ def export_embedded_js(proj: Optional[StudioProjectContext] = None) -> None:
 
     cats = list_translation_md_files(proj)
     files_map = {}
+    file_scripts = {}
+    cache_dir = proj.tools_dir / "validator_cache"
+    cache_dir.mkdir(exist_ok=True)
     for c in cats:
         rel_name = c["filename"]
-        if rel_name in proj.file_cache:
-            files_map[rel_name] = proj.file_cache[rel_name]["data"]
-        else:
-            files_map[rel_name] = parse_md_file(proj.md_dir / rel_name, proj=proj)
+        parsed = parse_md_file(proj.md_dir / rel_name, proj=proj)
+        key = hashlib.sha256(rel_name.encode('utf-8')).hexdigest()[:20]
+        relative = f"validator_cache/{key}.js"
+        (proj.tools_dir / relative).write_text(
+            "window.EMBEDDED_MD_DATA.files[" + json.dumps(rel_name) + "] = "
+            + json.dumps(parsed, ensure_ascii=False) + ";\n", encoding="utf-8")
+        file_scripts[rel_name] = relative
 
     payload = {
         "project": proj.profile,
         "categories": cats,
         "files": files_map,
+        "file_scripts": file_scripts,
         "character_bible": proj.character_bible,
         "voice_matrix": proj.voice_matrix,
         "glossary_terms": proj.glossary_terms,
@@ -1659,6 +1746,19 @@ class ValidatorRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(js_bytes)
             return
+
+        if parsed.path.startswith("/validator_cache/") and parsed.path.endswith(".js"):
+            cache_file = (proj.tools_dir / parsed.path.lstrip("/")).resolve()
+            if cache_file.is_file() and cache_file.is_relative_to((proj.tools_dir / "validator_cache").resolve()):
+                js_bytes = cache_file.read_bytes()
+                self.send_response(200)
+                self._send_cors_headers()
+                self.send_header("Content-Type", "application/javascript; charset=utf-8")
+                self.send_header("Content-Length", str(len(js_bytes)))
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(js_bytes)
+                return
 
         if parsed.path == "/api/projects":
             self._send_json({
@@ -1948,7 +2048,16 @@ def main() -> int:
         print(f"✅ [GBA Studio] embedded_md_data.js exportado em {elapsed_ms:.0f}ms ({len(cats)} arquivos)!")
         return 0
 
-    default_port = "8766" if "Story_2" in proj.game_id else ("8767" if "Story_3" in proj.game_id else "8765")
+    if "Story_2" in proj.game_id:
+        default_port = "8766"
+    elif "Story_3" in proj.game_id:
+        default_port = "8767"
+    elif "Summon Night (Japan)" in proj.game_id:
+        default_port = "8768"
+    elif "Tales of Hearts" in proj.game_id:
+        default_port = "8769"
+    else:
+        default_port = "8765"
     pref_port = int(os.environ.get("VALIDATOR_PORT", default_port))
     port = find_available_port(pref_port)
     no_browser = "--no-browser" in sys.argv

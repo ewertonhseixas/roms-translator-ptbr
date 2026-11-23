@@ -1,0 +1,28 @@
+{
+  "$schema": "https://gba-localization-studio.local/schemas/project_profile.v1.json",
+  "id": "Summon Night (Japan)",
+  "short_code": "SN NDS",
+  "title": "Summon Night (Nintendo DS)",
+  "platform": "NDS",
+  "product_code": "NTR-YSMJ-JPN",
+  "franchise_id": "SUMMON_NIGHT",
+  "franchise_glossary": "protocolo_traducao/GLOSSARIO_GLOBAL_SUMMON_NIGHT.md",
+  "local_glossary": "ARQUIVOS md/02-glossario-e-terminologias.md",
+  "character_catalog": "ARQUIVOS md/catalogo-de-personagens.md",
+  "game_specific_rules": "docs/REGRAS_ESPECIFICAS_DO_JOGO.md",
+  "metrics": {
+    "ideal_limit": 20,
+    "soft_limit": 21,
+    "hard_limit": 22,
+    "max_lines_per_box": 4,
+    "item_name_limit": 16,
+    "monster_name_limit": 14,
+    "font_type": "NFTR"
+  },
+  "protagonist": {
+    "gender_mode": "selectable_neutral",
+    "male_hero": ["hayato", "♂ Hayato / Touya", "Protagonistas Masculinos"],
+    "female_hero": ["aya", "♀ Aya / Natsumi", "Protagonistas Femininas"],
+    "player_tags": ["{PLAYER}", "{PARTNER}"]
+  }
+}

@@ -79,7 +79,7 @@ def split_md_row(line: str) -> List[str]:
         s = s[1:]
     if s.endswith("|"):
         s = s[:-1]
-    return [c.strip() for c in s.split("|")]
+    return [c.strip() for c in re.split(r"(?<!\\)\|", s)]
 
 
 def join_md_row(cells: List[str]) -> str:

@@ -1764,6 +1764,13 @@
       return extraValid;
     }
 
+    function getHeroDisplayName(heroField, fallback) {
+      if (!heroField) return fallback;
+      if (Array.isArray(heroField)) return String(heroField[1] || heroField[0] || fallback).replace(/^[♂♀]\s*/, "");
+      if (typeof heroField === "object" && heroField.name) return String(heroField.name).replace(/^[♂♀]\s*/, "");
+      return fallback;
+    }
+
     function applyProjectProfileUI(profile) {
       if (!profile) return;
       activeProject = profile;
@@ -1771,10 +1778,10 @@
       document.getElementById("projectShortCode").textContent = profile.short_code || "GBA";
       document.getElementById("gbaHardLimitLabel").textContent = profile.hard_limit || 35;
 
-      const mHero = profile.male_hero || { name: "Herói M" };
-      const fHero = profile.female_hero || { name: "Heroína F" };
-      document.getElementById("genderOptMale").textContent = `♂ Rota ${mHero.name} (M)`;
-      document.getElementById("genderOptFemale").textContent = `♀ Rota ${fHero.name} (F)`;
+      const mName = getHeroDisplayName(profile.male_hero, "Herói M");
+      const fName = getHeroDisplayName(profile.female_hero, "Heroína F");
+      document.getElementById("genderOptMale").textContent = `♂ Rota ${mName} (M)`;
+      document.getElementById("genderOptFemale").textContent = `♀ Rota ${fName} (F)`;
     }
 
     // =========================================================================
@@ -1915,6 +1922,16 @@
     // =========================================================================
     // CARREGAMENTO DE PROJETOS E CATEGORIAS
     // =========================================================================
+    function loadDataScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => { script.remove(); resolve(); };
+        script.onerror = () => { script.remove(); reject(new Error('Não foi possível carregar ' + src)); };
+        document.head.appendChild(script);
+      });
+    }
+
     async function loadStudioBootstrap() {
       try {
         const [projRes, ctxRes, catRes] = await Promise.all([
@@ -1945,12 +1962,8 @@
         }
       } catch (err) {
         if (!window.EMBEDDED_MD_DATA) {
-          await new Promise(resolve => {
-            const script = document.createElement("script");
-            script.src = "embedded_md_data.js";
-            script.onload = script.onerror = resolve;
-            document.head.appendChild(script);
-          });
+          try { await loadDataScript('embedded_md_data.js'); }
+          catch (offlineError) { showToast(offlineError.message); return; }
         }
         if (window.EMBEDDED_MD_DATA) {
           serverOnline = false;
@@ -1969,12 +1982,7 @@
           }];
           renderProjectSelect();
 
-          categories = emb.categories.map(c => {
-            const f = emb.files[c.filename];
-            const copyEntries = f.entries.map(e => ({ ...e }));
-            const delta = applyLocalOverridesToFile(c.filename, copyEntries);
-            return { ...c, validated: c.validated + delta };
-          });
+          categories = emb.categories.map(c => ({ ...c }));
           renderCategorySelect();
           if (categories.length > 0) {
             await loadFile(categories[0].filename);
@@ -2057,7 +2065,13 @@
       if (serverOnline) {
         const res = await fetch(`/api/file?name=${encodeURIComponent(filename)}&game=${encodeURIComponent(activeProject.id)}`);
         data = await res.json();
-      } else if (window.EMBEDDED_MD_DATA && window.EMBEDDED_MD_DATA.files[filename]) {
+      } else if (window.EMBEDDED_MD_DATA) {
+        const emb = window.EMBEDDED_MD_DATA;
+        if (!emb.files[filename] && emb.file_scripts && emb.file_scripts[filename]) {
+          try { await loadDataScript(emb.file_scripts[filename]); }
+          catch (error) { showToast(error.message); return; }
+        }
+        if (!emb.files[filename]) return;
         const rawFile = window.EMBEDDED_MD_DATA.files[filename];
         const clonedEntries = rawFile.entries.map(e => ({ ...e }));
         applyLocalOverridesToFile(filename, clonedEntries);
@@ -2068,6 +2082,9 @@
           validated: clonedEntries.filter(e => e.validated).length,
           entries: clonedEntries
         };
+        for (const key of Object.keys(emb.files)) {
+          if (key !== filename) delete emb.files[key];
+        }
       }
 
       if (!data) return;
@@ -2148,9 +2165,9 @@
         if (currentFilter === "qa_issues" && !e.has_qa_error && !e.has_qa_warn) return false;
         if (sec && e.section !== sec) return false;
 
-        if (currentGenderFilter === "MALE" && e.gender_branch === "FEMALE") return false;
-        if (currentGenderFilter === "FEMALE" && e.gender_branch === "MALE") return false;
-        if (currentGenderFilter === "EXCLUSIVE" && e.gender_branch === "BOTH") return false;
+        if (currentGenderFilter === "MALE" && (e.gender_branch || "").toUpperCase() === "FEMALE") return false;
+        if (currentGenderFilter === "FEMALE" && (e.gender_branch || "").toUpperCase() === "MALE") return false;
+        if (currentGenderFilter === "EXCLUSIVE" && !["MALE", "FEMALE"].includes((e.gender_branch || "").toUpperCase())) return false;
 
         if (currentCharFilter) {
           if (currentCharMode === "SPEAKER" && e.speaker_id !== currentCharFilter) return false;
@@ -2179,7 +2196,7 @@
     }
 
     // =========================================================================
-    // RENDERIZAÇÃO OTIMIZADA DA SIDEBAR (DOCUMENT FRAGMENT)
+    // RENDERIZAÇÃO OTIMIZADA DA SIDEBAR (DOCUMENT FRAGMENT + PAGINAÇÃO)
     // =========================================================================
     const sidebarPageSize = 150;
 
@@ -2190,8 +2207,8 @@
         return;
       }
 
-      const mHeroName = activeProject.male_hero ? activeProject.male_hero.name : "M";
-      const fHeroName = activeProject.female_hero ? activeProject.female_hero.name : "F";
+      const mHeroName = getHeroDisplayName(activeProject.male_hero, "M");
+      const fHeroName = getHeroDisplayName(activeProject.female_hero, "F");
 
       const frag = document.createDocumentFragment();
       const start = Math.floor(currentPos / sidebarPageSize) * sidebarPageSize;
@@ -2203,6 +2220,8 @@
         for (const [label, target] of [["Anterior", start - sidebarPageSize], ["Próxima", end]]) {
           const button = document.createElement("button");
           button.type = "button";
+          button.className = "mini-btn";
+          button.style.marginRight = "6px";
           button.textContent = label;
           button.disabled = target < 0 || target >= filteredEntries.length;
           button.addEventListener("click", () => {
@@ -2215,8 +2234,10 @@
         controls.append(" " + (start + 1) + "–" + end + " de " + filteredEntries.length);
         frag.appendChild(controls);
       }
+
       filteredEntries.slice(start, end).forEach((e, index) => {
         const idx = start + index;
+        const entryNum = (e.index !== undefined ? e.index : idx) + 1;
         const div = document.createElement("div");
         let cls = "entry-item";
         if (idx === currentPos) cls += " active";
@@ -2226,9 +2247,10 @@
         div.dataset.idx = idx;
 
         const themeClass = `char-theme-${e.speaker_id || "unknown"}`;
-        const gBadge = e.gender_branch === "MALE"
+        const gbUp = (e.gender_branch || "").toUpperCase();
+        const gBadge = gbUp === "MALE"
           ? `<span class="gender-badge gender-male" title="Exclusivo Rota ${mHeroName}">♂</span>`
-          : e.gender_branch === "FEMALE"
+          : gbUp === "FEMALE"
             ? `<span class="gender-badge gender-female" title="Exclusivo Rota ${fHeroName}">♀</span>`
             : "";
 
@@ -2241,7 +2263,7 @@
 
         div.innerHTML = `
           <div class="entry-item-top">
-            <span class="entry-id">#${e.index + 1} • ${escapeHtml(e.ref_id)}</span>
+            <span class="entry-id">#${entryNum} • ${escapeHtml(e.ref_id)}</span>
             <div style="display:flex; gap:4px; align-items:center;">
               ${qaBadge}
               <span class="badge ${e.validated ? 'valid' : 'pending'}">${e.validated ? '✅' : '⏳'}</span>
@@ -2323,7 +2345,8 @@
       }
 
       const e = filteredEntries[currentPos];
-      metaIndex.textContent = `${currentPos + 1} de ${filteredEntries.length} (Global #${e.index + 1})`;
+      const globalIdx = e.index !== undefined ? e.index : allEntries.indexOf(e);
+      metaIndex.textContent = `${currentPos + 1} de ${filteredEntries.length} (Global #${globalIdx + 1})`;
       metaRefId.textContent = e.ref_id;
       metaLineNum.textContent = `L${e.line_index + 1}`;
       metaSection.textContent = e.section || "Geral";
@@ -2345,18 +2368,19 @@
 
       // Guia de Voz (Character Voice) da Fase 0
       const voiceText = e.voice_guide
-        || (studioCharacterBible[spkId] && studioCharacterBible[spkId].voice)
+        || (studioCharacterBible[spkId] && (studioCharacterBible[spkId].voice_guidelines || studioCharacterBible[spkId].voice))
         || studioVoiceMatrix[spkId]
         || "Mantenha naturalidade dramática em PT-BR, respeitando o limite de 35 caracteres por linha e sem abreviações.";
       voiceGuideText.textContent = voiceText;
 
       // Rota de Gênero
-      const mHeroName = activeProject.male_hero ? activeProject.male_hero.name : "M";
-      const fHeroName = activeProject.female_hero ? activeProject.female_hero.name : "F";
-      if (e.gender_branch === "MALE") {
+      const mHeroName = getHeroDisplayName(activeProject.male_hero, "M");
+      const fHeroName = getHeroDisplayName(activeProject.female_hero, "F");
+      const gbUp = (e.gender_branch || "").toUpperCase();
+      if (gbUp === "MALE") {
         genderBranchBadge.className = "meta-pill gender-male";
         genderBranchBadge.innerHTML = `♂ Rota Exclusiva: <strong>${escapeHtml(mHeroName)} (Masculino)</strong>`;
-      } else if (e.gender_branch === "FEMALE") {
+      } else if (gbUp === "FEMALE") {
         genderBranchBadge.className = "meta-pill gender-female";
         genderBranchBadge.innerHTML = `♀ Rota Exclusiva: <strong>${escapeHtml(fHeroName)} (Feminino)</strong>`;
       } else {
@@ -2372,20 +2396,21 @@
         dialogueTagHint.textContent = `🏷️ Sem tags variáveis`;
       }
 
-      renderSceneFlow(e.index);
+      renderSceneFlow(globalIdx);
       renderTextDisplays();
       renderSurgicalGlossaryAndAbbr(e);
 
       ptEditInput.value = e.pt_text || "";
 
-      if (e.pt_alt) {
+      const altText = e.pt_alt || e.opt_text || "";
+      if (altText) {
         useAltBtn.style.display = "inline-block";
-        useAltBtn.textContent = `Usar Alt: "${e.pt_alt.slice(0, 26)}${e.pt_alt.length > 26 ? '...' : ''}"`;
+        useAltBtn.textContent = `Usar Alt: "${altText.slice(0, 26)}${altText.length > 26 ? '...' : ''}"`;
       } else {
         useAltBtn.style.display = "none";
       }
 
-      if (e.has_desc_col) {
+      if (e.has_desc_col || e.has_desc) {
         descEditorWrap.style.display = "flex";
         ptDescInput.value = e.pt_desc || "";
       } else {
@@ -2434,7 +2459,7 @@
         studioCanonicalAbbr.forEach(ab => {
           const chip = document.createElement("span");
           chip.className = "abbr-chip";
-          chip.title = `${ab.full} (${ab.en}) — Clique para inserir`;
+          chip.title = `${ab.term || ab.full || ab.abbr} (${ab.example || ab.en || ""}) — Clique para inserir`;
           chip.textContent = ab.abbr;
           chip.addEventListener("click", () => insertAtCursor(ptEditInput, ab.abbr));
           container.appendChild(chip);
@@ -2469,15 +2494,17 @@
         const isCurr = i === globalIdx;
         row.className = `scene-bubble ${isCurr ? 'current' : ''}`;
 
-        const gTag = item.gender_branch === "MALE"
+        const itemNum = (item.index !== undefined ? item.index : i) + 1;
+        const gbItemUp = (item.gender_branch || "").toUpperCase();
+        const gTag = gbItemUp === "MALE"
           ? `<span class="gender-badge gender-male">♂</span>`
-          : item.gender_branch === "FEMALE"
+          : gbItemUp === "FEMALE"
             ? `<span class="gender-badge gender-female">♀</span>`
             : "";
 
         row.innerHTML = `
           <div class="scene-bubble-speaker char-theme-${item.speaker_id || 'unknown'}" style="padding:2px 7px; border-radius:5px; border:1px solid transparent;">
-            #${item.index + 1} ${ getAvatarEmoji(item.speaker_id) } ${escapeHtml(item.speaker || 'Geral')} ${gTag}
+            #${itemNum} ${ getAvatarEmoji(item.speaker_id) } ${escapeHtml(item.speaker || 'Geral')} ${gTag}
             <div style="font-size:0.65rem; opacity:0.8; font-weight:normal;">➔ ${escapeHtml(item.addressee || '-')}</div>
           </div>
           <div class="scene-bubble-text">
@@ -2487,7 +2514,7 @@
         `;
 
         row.addEventListener("click", () => {
-          const targetFilteredIdx = filteredEntries.findIndex(fe => fe.index === item.index);
+          const targetFilteredIdx = filteredEntries.findIndex(fe => fe.line_index === item.line_index);
           if (targetFilteredIdx !== -1) {
             currentPos = targetFilteredIdx;
             updateActiveSidebarItem();
@@ -2502,7 +2529,7 @@
             sectionSelect.value = "";
             document.querySelectorAll(".filter-tab").forEach(b => b.classList.toggle("active", b.dataset.filter === "all"));
             applyFilters(false);
-            const newIdx = filteredEntries.findIndex(fe => fe.index === item.index);
+            const newIdx = filteredEntries.findIndex(fe => fe.line_index === item.line_index);
             if (newIdx !== -1) {
               currentPos = newIdx;
               updateActiveSidebarItem();
@@ -2649,7 +2676,8 @@
       if (filteredEntries.length === 0) return;
       const e = filteredEntries[currentPos];
       const newPt = ptEditInput.value;
-      const newDesc = e.has_desc_col ? ptDescInput.value : null;
+      const hasDesc = !!(e.has_desc_col || e.has_desc);
+      const newDesc = hasDesc ? ptDescInput.value : null;
 
       try {
         if (serverOnline) {
@@ -2674,7 +2702,7 @@
             Object.assign(e, data.entry);
           } else {
             e.pt_text = newPt;
-            if (e.has_desc_col) e.pt_desc = newDesc;
+            if (hasDesc) e.pt_desc = newDesc;
             e.validated = validated;
           }
         } else {
@@ -2683,7 +2711,7 @@
             JSON.stringify({ pt_text: newPt, pt_desc: newDesc, validated: validated })
           );
           e.pt_text = newPt;
-          if (e.has_desc_col) e.pt_desc = newDesc;
+          if (hasDesc) e.pt_desc = newDesc;
           e.validated = validated;
           const liveQa = evaluateEntryQaLive(e.en_text || "", newPt, isCurrentFileStoryDialogue);
           e.qa_issues = liveQa.issues;
@@ -2724,7 +2752,7 @@
         const updates = safeCandidates.map(e => ({
           line_index: e.line_index,
           pt_text: e.pt_text,
-          pt_desc: e.has_desc_col ? e.pt_desc : null,
+          pt_desc: (e.has_desc_col || e.has_desc) ? e.pt_desc : null,
           validated: true
         }));
         const res = await fetch("/api/batch_save", {
@@ -3033,12 +3061,12 @@
 
       const bibleEntries = Object.values(studioCharacterBible || {}).filter(c => {
         if (!q) return true;
-        return `${c.name} ${c.role} ${c.voice} ${c.bio}`.toLowerCase().includes(q);
+        return `${c.name} ${c.role} ${c.voice_guidelines || c.voice || ""} ${c.affiliation || c.bio || ""} ${c.idiom || ""}`.toLowerCase().includes(q);
       });
 
       const glossaryEntries = (studioGlossaryTerms || []).filter(g => {
         if (!q) return true;
-        return `${g.original} ${g.pt_br} ${g.short_form} ${g.notes}`.toLowerCase().includes(q);
+        return `${g.original} ${g.pt_br} ${g.short_form || ""} ${g.context || g.notes || ""}`.toLowerCase().includes(q);
       });
 
       let html = `<h3 style="font-size:0.88rem; color:#a5b4fc;">🎭 Fichas de Voz dos Personagens (${bibleEntries.length})</h3>`;
@@ -3049,7 +3077,7 @@
               <th>Personagem</th>
               <th>Papel / Arquétipo</th>
               <th>Tom de Voz & Idioleto (Character Voice)</th>
-              <th>Pronomes / Tratamento</th>
+              <th>Afiliação / Registro</th>
             </tr>
           </thead>
           <tbody>`;
@@ -3058,8 +3086,8 @@
             <tr>
               <td><strong>${escapeHtml(c.name)}</strong></td>
               <td>${escapeHtml(c.role || "-")}</td>
-              <td>${escapeHtml(c.voice || c.bio || "-")}</td>
-              <td>${escapeHtml(c.pronouns || "-")}</td>
+              <td>${escapeHtml(c.voice_guidelines || c.voice || c.bio || "-")}</td>
+              <td>${escapeHtml(c.affiliation || c.voice_register || c.pronouns || "-")}</td>
             </tr>
           `;
         });
@@ -3074,18 +3102,18 @@
           <tr>
             <th>Original (EN/JP)</th>
             <th>Tradução Canônica (PT-BR)</th>
-            <th>Forma Curta (Menus)</th>
+            <th>Forma Curta (Diálogos / Menus)</th>
             <th>Diretriz / Uso</th>
           </tr>
         </thead>
         <tbody>`;
-      glossaryEntries.slice(0, 120).forEach(g => {
+      glossaryEntries.slice(0, 150).forEach(g => {
         html += `
           <tr>
             <td style="font-family:monospace; color:#93c5fd;">${escapeHtml(g.original)}</td>
             <td><strong>${escapeHtml(g.pt_br)}</strong></td>
             <td style="font-family:monospace; color:#fde68a;">${escapeHtml(g.short_form || "-")}</td>
-            <td style="color:var(--text-muted);">${escapeHtml(g.notes || "-")}</td>
+            <td style="color:var(--text-muted);">${escapeHtml(g.context || g.notes || "-")}</td>
           </tr>
         `;
       });
@@ -3197,9 +3225,10 @@
     });
 
     document.getElementById("autoWrapBtn").addEventListener("click", () => {
-      ptEditInput.value = smartWrapAntiOrphans(ptEditInput.value, Math.min(34, activeProject.hard_limit || 35));
+      const limit = Math.min(34, activeProject.hard_limit || 35);
+      ptEditInput.value = smartWrapAntiOrphans(ptEditInput.value, limit);
       updateLiveMetricsAndQa();
-      showToast("✨ Quebra automática Anti-Órfãos (≤34 chars) aplicada!");
+      showToast(`✨ Quebra automática Anti-Órfãos (≤${limit} chars) aplicada!`);
     });
 
     document.getElementById("unifyLinesBtn").addEventListener("click", () => {
@@ -3228,8 +3257,9 @@
     useAltBtn.addEventListener("click", () => {
       if (filteredEntries.length === 0) return;
       const e = filteredEntries[currentPos];
-      if (e.pt_alt) {
-        ptEditInput.value = e.pt_alt;
+      const altText = e.pt_alt || e.opt_text || "";
+      if (altText) {
+        ptEditInput.value = altText;
         updateLiveMetricsAndQa();
       }
     });
@@ -3357,7 +3387,8 @@
         saveEntry(true, true);
       } else if (ev.altKey && (ev.key === "w" || ev.key === "W")) {
         ev.preventDefault();
-        ptEditInput.value = smartWrapAntiOrphans(ptEditInput.value, Math.min(34, activeProject.hard_limit || 35));
+        const limit = Math.min(34, activeProject.hard_limit || 35);
+        ptEditInput.value = smartWrapAntiOrphans(ptEditInput.value, limit);
         updateLiveMetricsAndQa();
         showToast("✨ Auto-Wrap Anti-Órfãos aplicado!");
       } else if (ev.altKey && ev.key === "ArrowDown") {

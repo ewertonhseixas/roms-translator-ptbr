@@ -1,5 +1,6 @@
 """Inspect and patch Summon Night's indexed UI sprites."""
 
+import shutil
 import struct
 import argparse
 import json
@@ -167,8 +168,9 @@ class TextMasks:
         requests = list(dict.fromkeys(requests))
         payload = [dict(text=text, size=size, bold=bold, family=self.family) for text, size, bold in requests]
         script = Path(__file__).with_name("render_ui_masks.ps1")
+        ps_exe = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
         result = subprocess.run(
-            ["pwsh", "-NoProfile", "-File", str(script)],
+            [ps_exe, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script)],
             input=json.dumps(payload).encode("ascii"), capture_output=True, check=True,
         )
         for key, item in zip(requests, json.loads(result.stdout), strict=True):
