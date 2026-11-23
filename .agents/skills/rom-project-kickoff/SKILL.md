@@ -4,8 +4,8 @@ description: >-
   Inicia um novo projeto de tradução avaliando a ROM caso a caso: identifica o console
   (GBA, NDS, SNES, Mega Drive, PS1), seleciona as ferramentas de engenharia, gera o
   project_profile.json e docs/REGRAS_ESPECIFICAS_DO_JOGO.md, cria o Glossário Global
-  Soberano do Jogo (vinculado à série/spinoffs) e certifica que todos os .md extraídos
-  funcionem no App de Validação de Textos.
+  Soberano do Jogo (herdando a base do Jogo-Matriz da série e adicionando apenas termos
+  novos) e certifica que todos os .md extraídos funcionem no App de Validação de Textos.
 ---
 
 # 🚀 Skill: Kickoff Universal de Projeto & Engenharia por ROM (`rom-project-kickoff`)
@@ -36,9 +36,9 @@ description: >-
    - `protagonist`: `gender_mode` (`selectable_neutral`, `fixed_male` ou `fixed_female`), nomes dos heróis e `player_tags`.
 2. Documente em `docs/REGRAS_ESPECIFICAS_DO_JOGO.md` todas as particularidades da ROM e eventuais adaptações de regras para os agentes naquele jogo.
 
-### Passo 4: Inicialização do Glossário Global Soberano do Jogo (`02-glossario-e-terminologias.md`)
-- Todo jogo **DEVE** ter o seu próprio Glossário Global em `ARQUIVOS md/02-glossario-e-terminologias.md`.
-- Se o jogo fizer parte de uma franquia ou for um *spinoff* (ex: *Summon Night*, *Tales of*), acione a skill `franchise-glossary-sync` para herdar os termos canônicos da série como base determinante.
+### Passo 4: Inicialização do Glossário Global Soberano do Jogo (`02-glossario-*.md`)
+- Todo jogo **DEVE** ter o seu próprio Glossário Global em `ARQUIVOS md/02-glossario-e-terminologias.md` (ou `02-glossario-personagens-e-locais.md`).
+- Se o jogo fizer parte de uma franquia ou for um *spinoff* (ex: série *Summon Night*), acione a skill `franchise-glossary-sync`: **o primeiro jogo (*Summon Night: Swordcraft Story 1*) é o que manda para todas as referências gerais**, e os novos jogos da série herdam 100% dessa base e apenas adicionam novos termos exclusivos de suas tramas (respeitando o ciclo `Termo Inteiro > Forma Abreviada nos Diálogos`).
 
 ### Passo 5: Extração Textual e Certificação Obrigatória no App Validador (`validator-md-compliance`)
 1. Extraia os textos da ROM para `ARQUIVOS md/` (`02-glossario`, `03-mensagens-do-sistema`, `06-itens-equipamentos-e-descricoes`, `catalogo-de-personagens` e lotes de história `08-`, `09-`, etc.).

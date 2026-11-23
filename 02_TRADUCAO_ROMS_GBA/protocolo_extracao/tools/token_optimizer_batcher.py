@@ -35,14 +35,14 @@ def split_md_row(line: str) -> List[str]:
 
 
 def load_glossary_terms(glossary_path: Path) -> List[Tuple[str, str, str]]:
-    """Carrega termos do glossário (Original, Tradução, Contexto)."""
+    """Carrega termos do glossário (Original, Tradução Completa + Forma Abreviada, Contexto)."""
     terms = []
     if not glossary_path.exists():
         return terms
 
     lines = glossary_path.read_text(encoding="utf-8").splitlines()
     in_table = False
-    orig_col, trans_col, ctx_col = 0, 1, 3
+    orig_col, trans_col, short_col, ctx_col = 0, 1, None, None
 
     for line in lines:
         s = line.strip()
@@ -52,12 +52,16 @@ def load_glossary_terms(glossary_path: Path) -> List[Tuple[str, str, str]]:
 
         if s.startswith("|") and not in_table:
             headers = [h.lower() for h in split_md_row(s)]
+            orig_col, trans_col, short_col, ctx_col = 0, 1, None, None
             for idx, h in enumerate(headers):
-                if any(k in h for k in ("original", "termo")):
+                if orig_col == 0 and idx == 0 and any(k in h for k in ("original", "termo", "inglês", "nome")):
                     orig_col = idx
-                elif any(k in h for k in ("sugerid", "tradução", "pt-br")):
-                    trans_col = idx
-                elif any(k in h for k in ("contexto", "observa", "papel")):
+                elif any(k in h for k in ("1ª apresentação", "canônic", "sugerid", "tradução", "pt-br", "nome no menu")):
+                    if trans_col == 1 or idx == 1:
+                        trans_col = idx
+                elif any(k in h for k in ("uso abreviado", "forma curta", "uso comum", "nome nos diálogos")):
+                    short_col = idx
+                elif any(k in h for k in ("definição", "contexto", "observa", "papel", "descrição", "categoria")):
                     ctx_col = idx
             continue
 
@@ -67,11 +71,16 @@ def load_glossary_terms(glossary_path: Path) -> List[Tuple[str, str, str]]:
                 continue
             cells = split_md_row(s)
             if len(cells) > max(orig_col, trans_col):
-                orig = cells[orig_col].replace("**", "").replace("`", "").strip()
+                orig = re.sub(r"\(\*.*?\*\)", "", cells[orig_col].replace("**", "").replace("`", "")).strip()
                 trans = cells[trans_col].replace("**", "").replace("`", "").strip()
-                ctx = cells[ctx_col].replace("**", "").replace("`", "").strip() if len(cells) > ctx_col else ""
+                short_val = cells[short_col].replace("**", "").replace("`", "").strip() if short_col is not None and len(cells) > short_col else ""
+                ctx = cells[ctx_col].replace("**", "").replace("`", "").strip() if ctx_col is not None and len(cells) > ctx_col else ""
+                if short_val and short_val.lower() != trans.lower():
+                    trans_combined = f"{trans} (Diálogo abreviado: {short_val})"
+                else:
+                    trans_combined = trans
                 if orig and len(orig) > 2:
-                    terms.append((orig, trans, ctx))
+                    terms.append((orig, trans_combined, ctx))
 
     return terms
 

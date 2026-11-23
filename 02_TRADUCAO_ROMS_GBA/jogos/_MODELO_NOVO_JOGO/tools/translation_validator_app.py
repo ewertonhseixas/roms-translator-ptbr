@@ -394,11 +394,11 @@ class StudioProjectContext:
                         for idx, h in enumerate(headers):
                             if orig_col is None and any(k in h for k in ("original", "inglês", "termo", "categoria", "nome oficial")):
                                 orig_col = idx
-                            elif pt_col is None and any(k in h for k in ("canônic", "1ª apresentação", "tradução", "sugerid", "pt-br", "menus")):
+                            elif pt_col is None and any(k in h for k in ("canônic", "1ª apresentação", "tradução", "sugerid", "pt-br", "menus", "nome no menu")):
                                 pt_col = idx
-                            elif short_col is None and any(k in h for k in ("forma curta", "uso comum", "diálogo")):
+                            elif short_col is None and any(k in h for k in ("uso abreviado", "forma curta", "uso comum", "diálogo")):
                                 short_col = idx
-                            elif ctx_col is None and any(k in h for k in ("definição", "contexto", "observa", "papel", "tipo", "efeito")):
+                            elif ctx_col is None and any(k in h for k in ("definição", "contexto", "observa", "papel", "tipo", "efeito", "descrição")):
                                 ctx_col = idx
                         continue
                     if in_table:

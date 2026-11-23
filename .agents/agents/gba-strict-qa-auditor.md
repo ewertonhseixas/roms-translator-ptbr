@@ -5,7 +5,7 @@ description: >-
   Gate automatizado (qa_gate_hook.py, md_validator_compat_check.py e metrics_analyzer.py)
   calibrado pelo project_profile.json da ROM e faz revisão pente-fino procurando estouros
   de linha, quebra de neutralidade de gênero, inglês residual, orfandade textual, desvios
-  do Glossário do Jogo e falhas de leitura no App Validador.
+  do Glossário Soberano (e da Matriz Swordcraft Story 1) e falhas no App Validador.
 subagent: true
 mainAgent: false
 tools: [read_file, edit_file, write_file, run_command, manage_task]
@@ -29,11 +29,11 @@ Verifique os limites da ROM em `project_profile.json` e `docs/REGRAS_ESPECIFICAS
 ### Passo 2: Caça aos 6 Pecados Capitais da Localização de ROMs
 Inspecione as linhas traduzidas procurando:
 1. **Incompatibilidade com o App Validador:** Tabelas com cabeçalhos inválidos, pipes (`|`) desalinhados ou linhas não reconhecidas pelo `translation_validator_app.py`.
-2. **Estouro de Largura (Overflow):** Qualquer linha individual entre `<br>` acima do `hard_limit` do jogo (padrão 35 chars no GBA).
+2. **Estouro de Largura (Overflow):** Qualquer linha individual entre `<br>` acima do `hard_limit` do jogo (padrão 35 chars no GBA). Quando uma frase estourar por usar a forma longa de um título em conversa comum, aplique o ciclo de vida do glossário (`Cavaleiro Forjador` ➔ `Cavaleiro`, `Lorde Forjador` ➔ `Lorde`, `Invocação Errante` ➔ `Errante`).
 3. **Quebra de Neutralidade de Gênero:** Adjetivos masculinos aplicados diretamente a `{PLAYER}` em jogos com protagonista selecionável (`selectable_neutral`).
 4. **Inglês Residual:** Palavras não traduzidas (*Guild, Tower, Master, Lord, Stray, Beast, Ore, Sword, Check, Yes, No*) ou interjeições em inglês (*Sigh, Gulp, Huh, Well*).
 5. **Orfandade Visual:** Preposições e artigos (`de`, `da`, `do`, `em`, `que`, `o`, `a`, `e`) pendurados no final de uma linha antes de `<br>`.
-6. **Corrupção de Variáveis e Desvio do Glossário:** Tags `{PLAYER}`, `{PARTNER}`, `[0x05]` ausentes ou termos que contradizem o Glossário Soberano do Jogo (`02-glossario-*.md`).
+6. **Corrupção de Variáveis e Desvio do Glossário / Jogo-Matriz:** Tags `{PLAYER}`, `{PARTNER}`, `[0x05]` ausentes ou termos que contradizem o Glossário Soberano do Jogo (`02-glossario-*.md`) e o Jogo-Matriz da série (*Summon Night: Swordcraft Story 1* em `GLOSSARIO_GLOBAL_SUMMON_NIGHT.md`).
 
 ### Passo 3: Correção Cirúrgica e Re-validação
 - Corrija diretamente as linhas reprovadas mantendo o tom de voz (*Character Voice*) do falante e rode novamente `md_validator_compat_check.py` e `qa_gate_hook.py` até obter **`🏆 CERTIFICADO`** e **`🏆 QUALITY GATE APROVADO! Zero erros críticos`**.

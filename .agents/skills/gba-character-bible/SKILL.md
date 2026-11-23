@@ -4,8 +4,8 @@ description: >-
   Executa a Fase 0 obrigatória do Protocolo Mestre de Tradução: verifica as regras
   específicas da ROM (project_profile.json), mapeia todos os falantes, pesquisa o lore
   oficial e constrói/atualiza o Catálogo de Personagens (catalogo-de-personagens.md) e
-  o Glossário Global Soberano do Jogo (02-glossario), sincronizando-o com o Glossário
-  da Série/Spinoffs quando aplicável. Use antes de traduzir novos capítulos.
+  o Glossário Global Soberano do Jogo (02-glossario), herdando a base soberana do
+  Jogo-Matriz da série (Summon Night: Swordcraft Story 1) quando aplicável.
 ---
 
 # 🎭 Skill: Bíblia de Personagens & Glossário Soberano (`gba-character-bible`)
@@ -38,6 +38,8 @@ Adicione ou atualize a entrada do personagem em `catalogo-de-personagens.md` def
   - *Entidades/Fadas/Bestas:* Dengoso/infantil, arcaico/místico ou rústico/direto conforme a criatura.
 - **Relações Interpessoais:** Como chama o protagonista e aliados.
 
-### Passo 4: Sincronização com o Glossário Global Soberano do Jogo (e Franquia/Spinoffs)
-- Registre todos os locais, títulos, organizações, raças, magias e materiais no **Glossário Global do Jogo** (`ARQUIVOS md/02-glossario-e-terminologias.md` ou `02-glossario-*.md`).
-- Se o jogo pertencer a uma série ou for um *spinoff* (configurado em `franchise_glossary` no `project_profile.json`, como `GLOSSARIO_GLOBAL_SUMMON_NIGHT.md`), garanta 100% de alinhamento com os termos determinantes da franquia usando a skill `franchise-glossary-sync`.
+### Passo 4: Sincronização com o Glossário Global Soberano do Jogo e Primazia do Jogo-Matriz
+- Registre todos os locais, títulos, organizações, raças, magias e materiais no **Glossário Global do Jogo** (`ARQUIVOS md/02-glossario-personagens-e-locais.md` ou `02-glossario-e-terminologias.md`).
+- **Primazia de *Summon Night: Swordcraft Story 1* (GBA) na Série:**
+  - Na franquia *Summon Night*, o [GLOSSARIO_GLOBAL_SUMMON_NIGHT.md](../../02_TRADUCAO_ROMS_GBA/protocolo_traducao/GLOSSARIO_GLOBAL_SUMMON_NIGHT.md) é focado estritamente no primeiro ***Summon Night: Swordcraft Story 1* (GBA)**, que é a **referência soberana que manda em todas as terminologias gerais da série**.
+  - Outros jogos da franquia (*Swordcraft Story 2*, *Swordcraft Story 3*, *Summon Night NDS*, etc.) herdam obrigatoriamente 100% da base do primeiro jogo e **apenas adicionam novos termos exclusivos** de suas próprias tramas, respeitando sempre o ciclo: **Termo Inteiro na introdução ➔ Forma Abreviada nos diálogos** (`Craftknight > Cavaleiro Forjador > Cavaleiro`, `Craftlord > Lorde Forjador > Lorde`, `Stray Summon > Invocação Errante > Errante`).
